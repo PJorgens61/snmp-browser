@@ -13,6 +13,7 @@ import time
 import json
 import os
 import sys
+import subprocess
 import logging
 import hashlib
 import base64
@@ -698,6 +699,25 @@ class MibParser:
 class SnmpBrowserGUI:
     """Interfaccia grafica SNMP Browser Production Ready con Monitoring Avanzato"""
 
+    @staticmethod
+    def _get_default_gateway():
+        """Detect the host's default gateway IP (macOS), falling back to 192.168.1.1"""
+        fallback = "192.168.1.1"
+        try:
+            output = subprocess.check_output(
+                ["route", "-n", "get", "default"],
+                stderr=subprocess.DEVNULL, timeout=2
+            ).decode()
+            for line in output.splitlines():
+                line = line.strip()
+                if line.startswith("gateway:"):
+                    gateway = line.split(":", 1)[1].strip()
+                    ipaddress.ip_address(gateway)  # validate
+                    return gateway
+        except Exception:
+            pass
+        return fallback
+
     def __init__(self, root):
         self.root = root
         self.root.title("SNMP-Browser")
@@ -716,7 +736,7 @@ class SnmpBrowserGUI:
         self.custom_mibs_file = "snmp_browser_custom_mibs.json"
         self.mib_parser = MibParser(self.logger)
         # Variabili configurazione base
-        self.host_var = tk.StringVar(value="192.168.1.1")
+        self.host_var = tk.StringVar(value=self._get_default_gateway())
         self.community_var = tk.StringVar(value="public")
         self.port_var = tk.StringVar(value="161")
         self.version_var = tk.StringVar(value="2c")
@@ -4252,7 +4272,7 @@ class SnmpBrowserGUI:
                 with open(self.config_file, 'r') as f:
                     config = json.load(f)
 
-                self.host_var.set(config.get('host', '192.168.1.1'))
+                self.host_var.set(config.get('host', self._get_default_gateway()))
                 self.community_var.set(config.get('community', 'public'))
                 self.port_var.set(config.get('port', '161'))
                 self.version_var.set(config.get('version', '2c'))
@@ -4784,7 +4804,7 @@ Right Click - Context menu
                     config = json.load(f)
 
                 # Applica configurazione
-                self.host_var.set(config.get('host', '192.168.1.1'))
+                self.host_var.set(config.get('host', self._get_default_gateway()))
                 self.community_var.set(config.get('community', 'public'))
                 self.port_var.set(config.get('port', '161'))
                 self.version_var.set(config.get('version', '2c'))
