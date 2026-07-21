@@ -110,8 +110,16 @@ Advanced SNMP browser with modern GUI for network device discovery, monitoring, 
 
 ## 📥 Download
 
-This fork does not publish pre-built releases. Build the macOS `.app` yourself from source —
-see [Building Executables](#️-building-executables) below.
+**macOS**: download `SNMP-Browser-Professional-macOS.zip` from the
+[latest release](https://github.com/PJorgens61/snmp-browser/releases/latest), unzip it, and drag
+`SNMP Browser Professional.app` to your `/Applications` folder (or `~/Applications` if you don't
+have admin rights).
+
+The app is unsigned, so on first launch **right-click it → Open → Open** to get past Gatekeeper's
+"unidentified developer" warning — a plain double-click will just show an error the first time.
+This only needs doing once.
+
+Prefer to build it yourself instead? See [Building Executables](#️-building-executables) below.
 
 For Windows or Linux, or for other languages, use the upstream
 [snmpware/snmp-browser releases](https://github.com/snmpware/snmp-browser/releases) instead.
