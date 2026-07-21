@@ -229,7 +229,7 @@ class GraphWindow:
         self.update_graph()
 
         if self.logger:
-            self.logger.info(f"Aperta finestra grafico per OID: {oid}")
+            self.logger.info(f"Opened graph window for OID: {oid}")
 
     def create_widgets(self):
         """Crea i widget per la finestra grafico"""
@@ -238,11 +238,11 @@ class GraphWindow:
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Info frame
-        info_frame = ttk.LabelFrame(main_frame, text="Informazioni")
+        info_frame = ttk.LabelFrame(main_frame, text="Information")
         info_frame.pack(fill=tk.X, pady=(0, 10))
 
         ttk.Label(info_frame, text=f"OID: {self.oid}").pack(anchor='w', padx=5, pady=2)
-        ttk.Label(info_frame, text=f"Nome: {self.name}").pack(anchor='w', padx=5, pady=2)
+        ttk.Label(info_frame, text=f"Name: {self.name}").pack(anchor='w', padx=5, pady=2)
 
         # Statistiche
         if self.data_points:
@@ -254,7 +254,7 @@ class GraphWindow:
                 ttk.Label(info_frame, text=f"Ultimo: {values[-1]:.2f}").pack(anchor='w', padx=5, pady=2)
 
         # Frame per il grafico
-        graph_frame = ttk.LabelFrame(main_frame, text="Grafico")
+        graph_frame = ttk.LabelFrame(main_frame, text="Graph")
         graph_frame.pack(fill=tk.BOTH, expand=True)
 
         # Crea figura matplotlib
@@ -266,9 +266,9 @@ class GraphWindow:
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=tk.X, pady=(10, 0))
 
-        ttk.Button(button_frame, text="Aggiorna", command=self.update_graph).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Salva Immagine", command=self.save_graph).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Chiudi", command=self.window.destroy).pack(side=tk.RIGHT)
+        ttk.Button(button_frame, text="Refresh", command=self.update_graph).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Save Image", command=self.save_graph).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Close", command=self.window.destroy).pack(side=tk.RIGHT)
 
     def update_graph(self):
         """Aggiorna il grafico con i dati"""
@@ -303,16 +303,16 @@ class GraphWindow:
         ax = self.figure.add_subplot(111)
 
         # Linea principale
-        ax.plot(timestamps, values, 'b-', linewidth=2, label='Valore')
+        ax.plot(timestamps, values, 'b-', linewidth=2, label='Value')
         ax.fill_between(timestamps, values, alpha=0.3)
 
         # Punti
         ax.scatter(timestamps, values, color='red', s=30, zorder=5)
 
         # Formattazione
-        ax.set_xlabel('Tempo')
-        ax.set_ylabel('Valore')
-        ax.set_title(f'{self.name} - Andamento nel tempo')
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Value')
+        ax.set_title(f'{self.name} - Trend over time')
         ax.grid(True, alpha=0.3)
         ax.legend()
 
@@ -335,10 +335,10 @@ class GraphWindow:
 
         if filename:
             self.figure.savefig(filename, dpi=100, bbox_inches='tight')
-            messagebox.showinfo("Salvataggio", f"Grafico salvato in {filename}")
+            messagebox.showinfo("Saving", f"Graph saved to {filename}")
 
             if self.logger:
-                self.logger.info(f"Grafico salvato: {filename}")
+                self.logger.info(f"Graph saved: {filename}")
 
 
 class SecureCredentialManager:
@@ -346,8 +346,21 @@ class SecureCredentialManager:
 
     def __init__(self, app_name="SNMPBrowser"):
         self.app_name = app_name
-        self.key_file = f".{app_name}_key"
+        self.key_file = os.path.join(self._get_app_data_dir(), f".{app_name}_key")
         self.cipher = self._get_or_create_cipher()
+
+    def _get_app_data_dir(self):
+        """Ottiene cartella dati applicazione per il sistema operativo"""
+        if sys.platform.startswith('win'):
+            base_dir = os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))
+            app_dir = os.path.join(base_dir, self.app_name)
+        elif sys.platform.startswith('darwin'):
+            app_dir = os.path.expanduser(f'~/Library/Application Support/{self.app_name}')
+        else:
+            config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+            app_dir = os.path.join(config_home, self.app_name)
+        os.makedirs(app_dir, exist_ok=True)
+        return app_dir
 
     def _get_or_create_cipher(self):
         """Ottiene o crea chiave di crittografia"""
@@ -466,13 +479,13 @@ class MibParser:
             self._parse_object_groups(content)
 
             if self.logger:
-                self.logger.info(f"MIB parsed: {len(self.oid_mappings)} OIDs trovati")
+                self.logger.info(f"MIB parsed: {len(self.oid_mappings)} OIDs found")
 
             return self.oid_mappings
 
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Errore parsing MIB: {e}")
+                self.logger.error(f"Error parsing MIB: {e}")
             raise
 
     def _remove_comments(self, content):
@@ -694,8 +707,8 @@ class SnmpBrowserGUI:
         # Setup logging
         self.setup_logging()
         self.logger.info("=" * 60)
-        self.logger.info("Avvio SNMP Browser v3.5 Production Ready + Advanced Monitoring")
-        self.logger.info(f"Sistema: {sys.platform}, Python: {sys.version}")
+        self.logger.info("Starting SNMP Browser v3.5 Production Ready + Advanced Monitoring")
+        self.logger.info(f"System: {sys.platform}, Python: {sys.version}")
 
         # Manager credenziali sicure
         self.credential_manager = SecureCredentialManager()
@@ -758,7 +771,7 @@ class SnmpBrowserGUI:
         self.historical_data_file = self._get_data_file_path("snmp_browser_historical.json")
         self.custom_mibs_file = self._get_data_file_path("snmp_browser_custom_mibs.json")
         self.log_dir = os.path.join(self.app_data_dir, 'logs')
-        self.logger.info(f"Dati salvati in: {self.app_data_dir}")
+        self.logger.info(f"Data saved in: {self.app_data_dir}")
         # Dizionario OID
         self.oid_names = self._build_oid_names_dictionary()
 
@@ -775,7 +788,7 @@ class SnmpBrowserGUI:
 
         # Bind eventi
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.version_var.trace('w', self.on_version_change)
+        self.version_var.trace_add('write', self.on_version_change)
 
         # Monitor memoria
         self.start_memory_monitor()
@@ -784,7 +797,7 @@ class SnmpBrowserGUI:
         self.start_auto_refresh()
         self.start_rule_monitoring()
         self.load_custom_mibs()
-        self.logger.info("Inizializzazione completata con monitoring avanzato")
+        self.logger.info("Initialization completed with advanced monitoring")
 
     def _get_app_data_dir(self):
         """Ottiene cartella dati applicazione per il sistema operativo"""
@@ -821,7 +834,7 @@ class SnmpBrowserGUI:
 
     def setup_logging(self):
         """Configura logging su file con rotazione"""
-        log_dir = os.path.join(self.app_data_dir, 'logs') if hasattr(self, 'app_data_dir') else "logs"
+        log_dir = os.path.join(self._get_app_data_dir(), 'logs')
         os.makedirs(log_dir, exist_ok=True)
 
         # Nome file con data
@@ -859,11 +872,11 @@ class SnmpBrowserGUI:
     def show_data_location(self):
         """Mostra dove sono salvati i dati"""
         location_info = f"""
-    📁 POSIZIONE DATI APPLICAZIONE
+    📁 APPLICATION DATA LOCATION
 
-    Cartella principale: {self.app_data_dir}
+    Main folder: {self.app_data_dir}
 
-    File configurazione:
+    Configuration files:
     • {os.path.basename(self.config_file)}
     • {os.path.basename(self.saved_values_file)}
     • {os.path.basename(self.rules_file)}
@@ -871,15 +884,15 @@ class SnmpBrowserGUI:
     • {os.path.basename(self.historical_data_file)}
     • {os.path.basename(self.custom_mibs_file)}
 
-    Cartella log: {self.log_dir}
+    Log folder: {self.log_dir}
 
-    Spazio utilizzato: {self._get_folder_size(self.app_data_dir):.2f} MB
+    Space used: {self._get_folder_size(self.app_data_dir):.2f} MB
     """
 
-        messagebox.showinfo("Posizione Dati", location_info)
+        messagebox.showinfo("Data Location", location_info)
 
         # Chiedi se aprire la cartella
-        if messagebox.askyesno("Apri Cartella", "Vuoi aprire la cartella dati?"):
+        if messagebox.askyesno("Open Folder", "Do you want to open the data folder?"):
             self.open_data_folder()
 
     def _get_folder_size(self, folder_path):
@@ -905,7 +918,7 @@ class SnmpBrowserGUI:
             else:
                 os.system(f'xdg-open "{self.app_data_dir}"')
         except Exception as e:
-            messagebox.showerror("Errore", f"Impossibile aprire cartella: {e}")
+            messagebox.showerror("Error", f"Unable to open folder: {e}")
 
     def start_memory_monitor(self):
         """Monitora l'uso della memoria"""
@@ -916,9 +929,9 @@ class SnmpBrowserGUI:
 
             # Avvisa se supera soglia
             if memory_mb > 800:
-                self.logger.warning(f"Uso memoria elevato: {memory_mb:.1f}MB")
+                self.logger.warning(f"High memory usage: {memory_mb:.1f}MB")
                 self.root.after(0, lambda: self.status_var.set(
-                    f"Memoria elevata: {memory_mb:.1f}MB"))
+                    f"High memory usage: {memory_mb:.1f}MB"))
 
             # Ricontrolla ogni 30 secondi
             self.root.after(30000, monitor)
@@ -958,49 +971,49 @@ class SnmpBrowserGUI:
         # Menu File
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Salva Configurazione", command=self.save_config, accelerator="Ctrl+S")
-        file_menu.add_command(label="Carica Configurazione", command=self.load_config_dialog, accelerator="Ctrl+O")
+        file_menu.add_command(label="Save Configuration", command=self.save_config, accelerator="Ctrl+S")
+        file_menu.add_command(label="Load Configuration", command=self.load_config_dialog, accelerator="Ctrl+O")
         file_menu.add_separator()
-        file_menu.add_command(label="Esporta Risultati", command=self.export_results, accelerator="Ctrl+E")
+        file_menu.add_command(label="Export Results", command=self.export_results, accelerator="Ctrl+E")
         file_menu.add_separator()
-        file_menu.add_command(label="Visualizza Log", command=self.show_log_viewer)
+        file_menu.add_command(label="View Log", command=self.show_log_viewer)
         file_menu.add_separator()
-        file_menu.add_command(label="Esci", command=self.on_closing, accelerator="Ctrl+Q")
+        file_menu.add_command(label="Exit", command=self.on_closing, accelerator="Ctrl+Q")
 
         # NUOVO: Menu Monitoring
         monitor_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Monitoring", menu=monitor_menu)
-        monitor_menu.add_command(label="Gestisci Regole Alert", command=self.manage_rules)
-        monitor_menu.add_command(label="📧 Configura Email", command=self.configure_email)
-        monitor_menu.add_command(label="📊 Visualizza Alert History", command=self.show_alert_history)
+        monitor_menu.add_command(label="Manage Alert Rules", command=self.manage_rules)
+        monitor_menu.add_command(label="📧 Configure Email", command=self.configure_email)
+        monitor_menu.add_command(label="📊 View Alert History", command=self.show_alert_history)
         monitor_menu.add_separator()
-        monitor_menu.add_command(label="🧹 Pulisci Alert", command=self.clear_alerts)
+        monitor_menu.add_command(label="🧹 Clear Alerts", command=self.clear_alerts)
 
         # Menu Tools
         tools_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=tools_menu)
-        tools_menu.add_command(label="🔌 Test Connessione", command=self.test_connection, accelerator="Ctrl+T")
-        tools_menu.add_command(label="🌊 SNMP Walk Completo", command=self.full_walk)
-        tools_menu.add_command(label="🧹 Pulisci Cache", command=self.clear_cache)
+        tools_menu.add_command(label="🔌 Test Connection", command=self.test_connection, accelerator="Ctrl+T")
+        tools_menu.add_command(label="🌊 Full SNMP Walk", command=self.full_walk)
+        tools_menu.add_command(label="🧹 Clear Cache", command=self.clear_cache)
         tools_menu.add_separator()
-        tools_menu.add_command(label="📥 Importa MIB Custom", command=self.import_mib)  # ← QUESTA
-        tools_menu.add_command(label="📚 Gestisci MIB", command=self.manage_custom_mibs)  # ← E QUESTA!
+        tools_menu.add_command(label="📥 Import Custom MIB", command=self.import_mib)  # ← QUESTA
+        tools_menu.add_command(label="📚 Manage MIBs", command=self.manage_custom_mibs)  # ← E QUESTA!
         tools_menu.add_separator()
-        tools_menu.add_command(label="🔐 Wizard SNMPv3", command=self.show_snmpv3_wizard)
-        tools_menu.add_command(label="🎯 Scopri Engine ID", command=self.discover_engine_id)
+        tools_menu.add_command(label="🔐 SNMPv3 Wizard", command=self.show_snmpv3_wizard)
+        tools_menu.add_command(label="🎯 Discover Engine ID", command=self.discover_engine_id)
         tools_menu.add_separator()
-        tools_menu.add_command(label="💾 Salva Dati Storici", command=self.save_historical_data)
-        tools_menu.add_command(label="🧹 Pulisci Dati Vecchi", command=self.clean_old_historical_data)
+        tools_menu.add_command(label="💾 Save Historical Data", command=self.save_historical_data)
+        tools_menu.add_command(label="🧹 Clean Old Data", command=self.clean_old_historical_data)
         tools_menu.add_separator()
-        tools_menu.add_command(label="📁 Posizione Dati", command=self.show_data_location)
-        tools_menu.add_command(label="📂 Apri Cartella Dati", command=self.open_data_folder)
+        tools_menu.add_command(label="📁 Data Location", command=self.show_data_location)
+        tools_menu.add_command(label="📂 Open Data Folder", command=self.open_data_folder)
         tools_menu.add_separator()
-        tools_menu.add_command(label="⚙️ Impostazioni", command=self.show_settings)
+        tools_menu.add_command(label="⚙️ Settings", command=self.show_settings)
 
         # Menu Help
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="📚 Guida", command=self.show_help, accelerator="F1")
+        help_menu.add_command(label="📚 Guide", command=self.show_help, accelerator="F1")
         help_menu.add_command(label="⌨️ Shortcuts", command=self.show_shortcuts)
         help_menu.add_command(label="🐛 Debug Info", command=self.show_debug_info)
         help_menu.add_separator()
@@ -1009,7 +1022,7 @@ class SnmpBrowserGUI:
     def import_mib(self):
         """Importa e parsa file MIB custom"""
         filenames = filedialog.askopenfilenames(
-            title="📁 Seleziona file MIB da importare",
+            title="📁 Select MIB files to import",
             filetypes=[
                 ("MIB files", "*.mib;*.txt;*.my"),
                 ("Tutti i MIB", "*.mib"),
@@ -1032,7 +1045,7 @@ class SnmpBrowserGUI:
         progress_window.transient(self.root)
         progress_window.grab_set()
 
-        ttk.Label(progress_window, text="Importazione MIB in corso...",
+        ttk.Label(progress_window, text="Importing MIB...",
                   font=('TkDefaultFont', 10, 'bold')).pack(pady=10)
 
         progress_var = tk.DoubleVar()
@@ -1054,7 +1067,7 @@ class SnmpBrowserGUI:
                 progress_window.update()
 
                 # Parsa MIB
-                self.logger.info(f"Importazione MIB: {filename}")
+                self.logger.info(f"Importing MIB: {filename}")
                 new_oids = self.mib_parser.parse_file(filename)
 
                 if new_oids:
@@ -1073,7 +1086,7 @@ class SnmpBrowserGUI:
                     details_text.insert(tk.END,
                                         f"✅ {os.path.basename(filename)}: {len(new_oids)} OID\n")
 
-                    self.logger.info(f"MIB importato: {len(new_oids)} OID da {filename}")
+                    self.logger.info(f"MIB imported: {len(new_oids)} OIDs from {filename}")
                 else:
                     details_text.insert(tk.END,
                                         f"⚠️ {os.path.basename(filename)}: Nessun OID trovato\n")
@@ -1082,10 +1095,10 @@ class SnmpBrowserGUI:
                 error_msg = f"Errore in {os.path.basename(filename)}: {str(e)}"
                 errors.append(error_msg)
                 details_text.insert(tk.END, f"❌ {error_msg}\n")
-                self.logger.error(f"Errore import MIB: {e}")
+                self.logger.error(f"Error importing MIB: {e}")
 
         progress_var.set(len(filenames))
-        status_label.config(text="Importazione completata!")
+        status_label.config(text="Import completed!")
 
         # Salva MIB custom
         self.save_custom_mibs()
@@ -1099,12 +1112,12 @@ class SnmpBrowserGUI:
                    command=progress_window.destroy).pack(pady=10)
 
         if errors:
-            self.logger.warning(f"Import MIB completato con {len(errors)} errori")
+            self.logger.warning(f"MIB import completed with {len(errors)} errors")
 
-        messagebox.showinfo("📥 Import MIB Completato",
-                            f"Importati {total_imported} OID totali\n"
-                            f"Da {len(filenames)} file MIB\n"
-                            f"Errori: {len(errors)}")
+        messagebox.showinfo("📥 MIB Import Completed",
+                            f"Imported {total_imported} total OIDs\n"
+                            f"From {len(filenames)} MIB files\n"
+                            f"Errors: {len(errors)}")
 
     def save_custom_mibs(self):
         """Salva MIB custom su file"""
@@ -1122,10 +1135,10 @@ class SnmpBrowserGUI:
             with open(self.custom_mibs_file, 'w') as f:
                 json.dump(save_data, f, indent=2)
 
-            self.logger.info(f"Salvati {len(self.custom_mibs)} MIB custom")
+            self.logger.info(f"Saved {len(self.custom_mibs)} custom MIBs")
 
         except Exception as e:
-            self.logger.error(f"Errore salvataggio MIB custom: {e}")
+            self.logger.error(f"Error saving custom MIBs: {e}")
 
     def load_custom_mibs(self):
         """Carica MIB custom salvati"""
@@ -1141,10 +1154,10 @@ class SnmpBrowserGUI:
                         self.oid_names.update(mib_data['oids'])
                         total_oids += len(mib_data['oids'])
 
-                self.logger.info(f"Caricati {len(self.custom_mibs)} MIB custom con {total_oids} OID")
+                self.logger.info(f"Loaded {len(self.custom_mibs)} custom MIBs with {total_oids} OIDs")
 
         except Exception as e:
-            self.logger.error(f"Errore caricamento MIB custom: {e}")
+            self.logger.error(f"Error loading custom MIBs: {e}")
 
     def refresh_oid_descriptions(self):
         """Aggiorna le descrizioni OID nelle visualizzazioni"""
@@ -1167,7 +1180,7 @@ class SnmpBrowserGUI:
                     values[2] = self.oid_names[oid]
                     self.dashboard_tree.item(item, values=values)
 
-        self.logger.info("Descrizioni OID aggiornate con MIB custom")
+        self.logger.info("OID descriptions updated with custom MIBs")
 
     def manage_custom_mibs(self):
         """Gestisci MIB custom importati"""
@@ -1181,7 +1194,7 @@ class SnmpBrowserGUI:
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Lista MIB
-        list_frame = ttk.LabelFrame(main_frame, text="MIB Importati")
+        list_frame = ttk.LabelFrame(main_frame, text="Imported MIBs")
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
         # Treeview
@@ -1210,7 +1223,7 @@ class SnmpBrowserGUI:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Frame dettagli
-        details_frame = ttk.LabelFrame(main_frame, text="Dettagli MIB Selezionato")
+        details_frame = ttk.LabelFrame(main_frame, text="Selected MIB Details")
         details_frame.pack(fill=tk.BOTH, expand=True)
 
         details_text = tk.Text(details_frame, height=8, wrap=tk.WORD)
@@ -1234,14 +1247,14 @@ class SnmpBrowserGUI:
                         details_text.insert(tk.END, f"OID importati: {len(data['oids'])}\n\n")
 
                         # Mostra primi 10 OID
-                        details_text.insert(tk.END, "Esempio OID:\n")
+                        details_text.insert(tk.END, "Example OID:\n")
                         count = 0
                         for oid, name in list(data['oids'].items())[:10]:
                             details_text.insert(tk.END, f"  {oid} -> {name}\n")
                             count += 1
 
                         if len(data['oids']) > 10:
-                            details_text.insert(tk.END, f"  ... e altri {len(data['oids']) - 10} OID\n")
+                            details_text.insert(tk.END, f"  ... and {len(data['oids']) - 10} OID\n")
 
         mib_tree.bind("<<TreeviewSelect>>", show_mib_details)
 
@@ -1258,7 +1271,7 @@ class SnmpBrowserGUI:
                 if values:
                     mib_name = values[0]
 
-                    if messagebox.askyesno("Conferma", f"Rimuovere MIB {mib_name}?"):
+                    if messagebox.askyesno("Confirm", f"Remove MIB {mib_name}?"):
                         # Rimuovi OID dal dizionario principale
                         if mib_name in self.custom_mibs:
                             for oid in self.custom_mibs[mib_name]['oids']:
@@ -1271,7 +1284,7 @@ class SnmpBrowserGUI:
                             self.save_custom_mibs()
                             self.refresh_oid_descriptions()
 
-                            messagebox.showinfo("✅", f"MIB {mib_name} rimosso")
+                            messagebox.showinfo("✅", f"MIB {mib_name} removed")
 
         def export_mib_list():
             """Esporta lista MIB e OID"""
@@ -1300,26 +1313,26 @@ class SnmpBrowserGUI:
                                     f.write(f"  {oid} = {name}\n")
                                 f.write("\n")
 
-                    messagebox.showinfo("✅", f"Esportato in {filename}")
+                    messagebox.showinfo("✅", f"Exported to {filename}")
 
                 except Exception as e:
-                    messagebox.showerror("Errore", f"Errore export: {e}")
+                    messagebox.showerror("Error", f"Export error: {e}")
 
-        ttk.Button(button_frame, text="📥 Importa Altri MIB",
+        ttk.Button(button_frame, text="📥 Import More MIBs",
                    command=lambda: [mib_window.destroy(), self.import_mib()]).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="🗑️ Rimuovi Selezionato",
+        ttk.Button(button_frame, text="🗑️ Remove Selected",
                    command=remove_mib).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="📤 Esporta Lista",
+        ttk.Button(button_frame, text="📤 Export List",
                    command=export_mib_list).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="🔄 Aggiorna Vista",
+        ttk.Button(button_frame, text="🔄 Refresh View",
                    command=self.refresh_oid_descriptions).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Chiudi",
+        ttk.Button(button_frame, text="Close",
                    command=mib_window.destroy).pack(side=tk.RIGHT, padx=5)
 
         # Info
         info_label = ttk.Label(main_frame,
-                               text=f"Totale: {len(self.custom_mibs)} MIB, "
-                                    f"{sum(len(m['oids']) for m in self.custom_mibs.values())} OID custom",
+                               text=f"Total: {len(self.custom_mibs)} MIBs, "
+                                    f"{sum(len(m['oids']) for m in self.custom_mibs.values())} custom OIDs",
                                foreground="blue")
         info_label.pack(pady=(5, 0))
 
@@ -1349,7 +1362,7 @@ class SnmpBrowserGUI:
 
     def create_config_frame(self, parent):
         """Frame configurazione con validazione"""
-        config_frame = ttk.LabelFrame(parent, text="🔧 Configurazione SNMP")
+        config_frame = ttk.LabelFrame(parent, text="🔧 SNMP Configuration")
         config_frame.pack(fill=tk.X, pady=(0, 5))
 
         # Prima riga
@@ -1360,11 +1373,11 @@ class SnmpBrowserGUI:
         self.host_entry = ttk.Entry(row1, textvariable=self.host_var, width=15)
         self.host_entry.pack(side=tk.LEFT, padx=(5, 10))
 
-        ttk.Label(row1, text="Porta:").pack(side=tk.LEFT)
+        ttk.Label(row1, text="Port:").pack(side=tk.LEFT)
         self.port_entry = ttk.Entry(row1, textvariable=self.port_var, width=6)
         self.port_entry.pack(side=tk.LEFT, padx=(5, 10))
 
-        ttk.Label(row1, text="Versione:").pack(side=tk.LEFT)
+        ttk.Label(row1, text="Version:").pack(side=tk.LEFT)
         version_combo = ttk.Combobox(row1, textvariable=self.version_var, width=5,
                                      values=["1", "2c", "3"], state='readonly')
         version_combo.pack(side=tk.LEFT, padx=(5, 10))
@@ -1386,7 +1399,7 @@ class SnmpBrowserGUI:
         ttk.Label(row2, text="Retry:").pack(side=tk.LEFT)
         ttk.Entry(row2, textvariable=self.retries_var, width=6).pack(side=tk.LEFT, padx=(5, 10))
 
-        ttk.Checkbutton(row2, text="Scansione Estesa",
+        ttk.Checkbutton(row2, text="Extended Scan",
                         variable=self.extended_scan_var).pack(side=tk.LEFT, padx=(20, 10))
 
         # Pulsanti
@@ -1402,7 +1415,7 @@ class SnmpBrowserGUI:
         ttk.Button(btn_frame, text="🔌 Test", command=self.test_connection).pack(side=tk.LEFT, padx=2)
 
         # Frame SNMPv3
-        self.v3_frame = ttk.LabelFrame(config_frame, text="🔐 Configurazione SNMPv3")
+        self.v3_frame = ttk.LabelFrame(config_frame, text="🔐 SNMPv3 Configuration")
 
         # Prima riga v3
         v3_row1 = ttk.Frame(self.v3_frame)
@@ -1437,7 +1450,7 @@ class SnmpBrowserGUI:
                                          width=15, show="*")
         self.priv_pass_entry.pack(side=tk.LEFT, padx=(5, 10))
 
-        ttk.Checkbutton(v3_row2, text="👀 Mostra",
+        ttk.Checkbutton(v3_row2, text="👀 Show",
                         variable=self.v3_show_passwords,
                         command=self.toggle_password_visibility).pack(side=tk.LEFT, padx=(10, 5))
 
@@ -1449,7 +1462,7 @@ class SnmpBrowserGUI:
 
     def create_alert_status_frame(self, parent):
         """NUOVO: Crea il frame per mostrare lo stato degli alert"""
-        self.alert_frame = ttk.LabelFrame(parent, text="🚨 Stato Sistema & Alert")
+        self.alert_frame = ttk.LabelFrame(parent, text="🚨 System Status & Alerts")
         self.alert_frame.pack(fill=tk.X, pady=(0, 5))
 
         status_container = ttk.Frame(self.alert_frame)
@@ -1461,13 +1474,13 @@ class SnmpBrowserGUI:
         self.update_status_indicator("ok")
 
         # Label per stato testuale
-        self.alert_status_var = tk.StringVar(value="✅ Sistema OK - Nessun alert attivo")
+        self.alert_status_var = tk.StringVar(value="✅ System OK - No active alerts")
         self.alert_status_label = ttk.Label(status_container, textvariable=self.alert_status_var,
                                             font=('Segoe UI', 10, 'bold'))
         self.alert_status_label.pack(side=tk.LEFT, padx=5)
 
         # Contatori alert
-        self.alert_count_var = tk.StringVar(value="Alert: 0 | Regole: 0")
+        self.alert_count_var = tk.StringVar(value="Alert: 0 | Rules: 0")
         ttk.Label(status_container, textvariable=self.alert_count_var).pack(side=tk.LEFT, padx=(20, 5))
 
         # Ultimo alert
@@ -1475,9 +1488,9 @@ class SnmpBrowserGUI:
         ttk.Label(status_container, textvariable=self.last_alert_var).pack(side=tk.LEFT, padx=(20, 5))
 
         # Pulsanti alert
-        ttk.Button(status_container, text="📋 Vedi Alert",
+        ttk.Button(status_container, text="📋 View Alert",
                    command=self.show_alert_history).pack(side=tk.RIGHT, padx=2)
-        ttk.Button(status_container, text="🔔 Configura Alert",
+        ttk.Button(status_container, text="🔔 Configure Alert",
                    command=self.manage_rules).pack(side=tk.RIGHT, padx=2)
 
     def update_status_indicator(self, status):
@@ -1511,20 +1524,20 @@ class SnmpBrowserGUI:
     def create_browser_tab(self):
         """Tab Browser principale con supporto alert"""
         browser_frame = ttk.Frame(self.notebook)
-        self.notebook.add(browser_frame, text="🌐 Browser SNMP")
+        self.notebook.add(browser_frame, text="🌐 SNMP Browser")
 
         # Filtri
-        filter_frame = ttk.LabelFrame(browser_frame, text="🔍 Filtri")
+        filter_frame = ttk.LabelFrame(browser_frame, text="🔍 Filters")
         filter_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Label(filter_frame, text="Cerca:").pack(side=tk.LEFT, padx=5)
-        self.filter_var.trace('w', self.apply_filter)
+        ttk.Label(filter_frame, text="Search:").pack(side=tk.LEFT, padx=5)
+        self.filter_var.trace_add('write', self.apply_filter)
         filter_entry = ttk.Entry(filter_frame, textvariable=self.filter_var, width=30)
         filter_entry.pack(side=tk.LEFT, padx=5)
 
-        ttk.Button(filter_frame, text="🧹 Pulisci", command=self.clear_filter).pack(side=tk.LEFT, padx=5)
+        ttk.Button(filter_frame, text="🧹 Clear", command=self.clear_filter).pack(side=tk.LEFT, padx=5)
 
-        ttk.Checkbutton(filter_frame, text="Solo Errori",
+        ttk.Checkbutton(filter_frame, text="Errors Only",
                         variable=self.show_errors_var,
                         command=self.apply_filter).pack(side=tk.LEFT, padx=(20, 5))
 
@@ -1533,10 +1546,11 @@ class SnmpBrowserGUI:
         results_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         columns = ("OID", "Nome", "Tipo", "Valore", "Stato", "Timestamp")
+        column_labels = {"Nome": "Name", "Tipo": "Type", "Valore": "Value", "Stato": "Status"}
         self.results_tree = ttk.Treeview(results_frame, columns=columns, show="headings", height=15)
 
         for col in columns:
-            self.results_tree.heading(col, text=col)
+            self.results_tree.heading(col, text=column_labels.get(col, col))
             self.results_tree.column(col, width=150)
 
         results_scroll = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=self.results_tree.yview)
@@ -1553,7 +1567,7 @@ class SnmpBrowserGUI:
         ttk.Button(action_frame, text="🔍 GET", command=self.get_selected).pack(side=tk.LEFT, padx=2)
         ttk.Button(action_frame, text="✏️ SET", command=self.set_value).pack(side=tk.LEFT, padx=2)
         ttk.Button(action_frame, text="🚶 WALK", command=self.walk_from_selected).pack(side=tk.LEFT, padx=2)
-        ttk.Button(action_frame, text="🔔 Crea Regola", command=self.create_rule_from_selected).pack(side=tk.LEFT,
+        ttk.Button(action_frame, text="🔔 Create Rule", command=self.create_rule_from_selected).pack(side=tk.LEFT,
                                                                                                     padx=2)
         ttk.Button(action_frame, text="📤 Export", command=self.export_results).pack(side=tk.LEFT, padx=2)
 
@@ -1567,15 +1581,15 @@ class SnmpBrowserGUI:
         self.notebook.add(dashboard_frame, text="📊 Dashboard")
 
         # Controlli
-        control_frame = ttk.LabelFrame(dashboard_frame, text="Controlli Dashboard")
+        control_frame = ttk.LabelFrame(dashboard_frame, text="Dashboard Controls")
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(control_frame, text="🔄 Aggiorna", command=self.refresh_dashboard).pack(side=tk.LEFT, padx=5, pady=5)
-        ttk.Button(control_frame, text="📊 Grafico", command=self.show_dashboard_graph).pack(side=tk.LEFT, padx=5)
-        ttk.Button(control_frame, text="🔔 Aggiungi Regola", command=self.add_rule_to_selected).pack(side=tk.LEFT,
+        ttk.Button(control_frame, text="🔄 Refresh", command=self.refresh_dashboard).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(control_frame, text="📊 Graph", command=self.show_dashboard_graph).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="🔔 Add Rule", command=self.add_rule_to_selected).pack(side=tk.LEFT,
                                                                                                     padx=5)
-        ttk.Button(control_frame, text="🗑️ Rimuovi", command=self.remove_from_dashboard).pack(side=tk.LEFT, padx=5)
-        ttk.Button(control_frame, text="🧹 Pulisci", command=self.clear_dashboard).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="🗑️ Remove", command=self.remove_from_dashboard).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="🧹 Clear", command=self.clear_dashboard).pack(side=tk.LEFT, padx=5)
 
         # Auto-refresh ATTIVO DI DEFAULT
         ttk.Checkbutton(control_frame, text="🔄 Auto-Refresh (30s)",
@@ -1583,7 +1597,7 @@ class SnmpBrowserGUI:
                         command=self.toggle_auto_refresh).pack(side=tk.LEFT, padx=(20, 5))
 
         # Intervallo refresh personalizzabile
-        ttk.Label(control_frame, text="Intervallo (s):").pack(side=tk.LEFT, padx=(10, 2))
+        ttk.Label(control_frame, text="Interval (s):").pack(side=tk.LEFT, padx=(10, 2))
         interval_spin = ttk.Spinbox(control_frame, from_=5, to=300, increment=5,
                                     textvariable=self.refresh_interval_var, width=8)
         interval_spin.pack(side=tk.LEFT, padx=2)
@@ -1603,10 +1617,10 @@ class SnmpBrowserGUI:
         # Configurazione colonne
         self.dashboard_tree.heading("Host", text="Host")
         self.dashboard_tree.heading("OID", text="OID")
-        self.dashboard_tree.heading("Nome", text="Nome")
-        self.dashboard_tree.heading("Valore", text="Valore")
-        self.dashboard_tree.heading("Timestamp", text="Aggiornamento")
-        self.dashboard_tree.heading("Stato", text="Stato")
+        self.dashboard_tree.heading("Nome", text="Name")
+        self.dashboard_tree.heading("Valore", text="Value")
+        self.dashboard_tree.heading("Timestamp", text="Update")
+        self.dashboard_tree.heading("Stato", text="Status")
         self.dashboard_tree.heading("Alert", text="🔔")
         self.dashboard_tree.heading("Trend", text="📈")
 
@@ -1625,7 +1639,7 @@ class SnmpBrowserGUI:
         dash_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Frame destro per mini-grafici e statistiche
-        right_frame = ttk.LabelFrame(paned, text="📈 Anteprima Dati")
+        right_frame = ttk.LabelFrame(paned, text="📈 Data Preview")
         paned.add(right_frame, weight=1)
 
         # Canvas per mini-grafico
@@ -1642,26 +1656,26 @@ class SnmpBrowserGUI:
     def create_mib_tree_tab(self):
         """Tab Albero MIB CORRETTO"""
         mib_frame = ttk.Frame(self.notebook)
-        self.notebook.add(mib_frame, text="🌳 Albero MIB")
+        self.notebook.add(mib_frame, text="🌳 MIB Tree")
 
         # Controlli
-        control_frame = ttk.LabelFrame(mib_frame, text="Controlli Albero MIB")
+        control_frame = ttk.LabelFrame(mib_frame, text="MIB Tree Controls")
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(control_frame, text="🔄 Costruisci", command=self.build_mib_tree).pack(side=tk.LEFT, padx=5, pady=5)
-        ttk.Button(control_frame, text="➕ Espandi", command=self.expand_all_mib).pack(side=tk.LEFT, padx=5)
-        ttk.Button(control_frame, text="➖ Comprimi", command=self.collapse_all_mib).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="🔄 Build", command=self.build_mib_tree).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(control_frame, text="➕ Expand", command=self.expand_all_mib).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="➖ Collapse", command=self.collapse_all_mib).pack(side=tk.LEFT, padx=5)
 
         # TreeView
         tree_frame = ttk.Frame(mib_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.mib_tree = ttk.Treeview(tree_frame, columns=("oid", "type", "value", "status"), height=20)
-        self.mib_tree.heading("#0", text="Nome MIB")
+        self.mib_tree.heading("#0", text="MIB Name")
         self.mib_tree.heading("oid", text="OID")
-        self.mib_tree.heading("type", text="Tipo")
-        self.mib_tree.heading("value", text="Valore")
-        self.mib_tree.heading("status", text="Stato")
+        self.mib_tree.heading("type", text="Type")
+        self.mib_tree.heading("value", text="Value")
+        self.mib_tree.heading("status", text="Status")
 
         self.mib_tree.column("#0", width=300)
         self.mib_tree.column("oid", width=200)
@@ -1685,7 +1699,7 @@ class SnmpBrowserGUI:
         self.progress = ttk.Progressbar(status_frame, mode='indeterminate')
         self.progress.pack(side=tk.LEFT, padx=(0, 10))
 
-        self.status_var = tk.StringVar(value="🟢 Pronto - Auto-refresh attivo (30s)")
+        self.status_var = tk.StringVar(value="🟢 Ready - Auto-refresh active (30s)")
         ttk.Label(status_frame, textvariable=self.status_var).pack(side=tk.LEFT)
 
         # Info memoria
@@ -1718,22 +1732,24 @@ class SnmpBrowserGUI:
         rules_window.title("🔔 Gestione Regole Alert")
         rules_window.geometry("900x600")
 
-        self.logger.info("Apertura gestione regole alert")
+        self.logger.info("Opening alert rule management")
 
         # Frame principale
         main_frame = ttk.Frame(rules_window)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Frame per lista regole
-        list_frame = ttk.LabelFrame(main_frame, text="Regole Attive")
+        list_frame = ttk.LabelFrame(main_frame, text="Active Rules")
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
         # Treeview per regole
         columns = ("OID", "Nome", "Condizione", "Soglia", "Azione", "Stato")
+        column_labels = {"Nome": "Name", "Condizione": "Condition", "Soglia": "Threshold",
+                          "Azione": "Action", "Stato": "Status"}
         rules_tree = ttk.Treeview(list_frame, columns=columns, show="headings", height=10)
 
         for col in columns:
-            rules_tree.heading(col, text=col)
+            rules_tree.heading(col, text=column_labels.get(col, col))
             rules_tree.column(col, width=120)
 
         # Popola con regole esistenti
@@ -1744,7 +1760,7 @@ class SnmpBrowserGUI:
 
             # Ripopola
             for rule_id, rule in self.alert_rules.items():
-                stato = "🔴 Attivo" if rule.is_triggered else "🟢 OK"
+                stato = "🔴 Active" if rule.is_triggered else "🟢 OK"
                 rules_tree.insert("", tk.END, values=(
                     rule.oid, rule.name, rule.condition, rule.threshold, rule.action, stato
                 ), tags=(rule_id,))
@@ -1759,7 +1775,7 @@ class SnmpBrowserGUI:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Frame per nuova regola
-        new_rule_frame = ttk.LabelFrame(main_frame, text="Nuova/Modifica Regola")
+        new_rule_frame = ttk.LabelFrame(main_frame, text="New/Edit Rule")
         new_rule_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Campi per nuova regola
@@ -1770,11 +1786,11 @@ class SnmpBrowserGUI:
         oid_entry = ttk.Entry(fields_frame, width=30)
         oid_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(fields_frame, text="Nome:").grid(row=0, column=2, sticky='e', padx=5, pady=5)
+        ttk.Label(fields_frame, text="Name:").grid(row=0, column=2, sticky='e', padx=5, pady=5)
         name_entry = ttk.Entry(fields_frame, width=30)
         name_entry.grid(row=0, column=3, padx=5, pady=5)
 
-        ttk.Label(fields_frame, text="Condizione:").grid(row=1, column=0, sticky='e', padx=5, pady=5)
+        ttk.Label(fields_frame, text="Condition:").grid(row=1, column=0, sticky='e', padx=5, pady=5)
         condition_combo = ttk.Combobox(fields_frame, values=[
             "less_than", "less_than_or_equal", "greater_than", "greater_than_or_equal",
             "equal", "not_equal", "contains"
@@ -1782,16 +1798,16 @@ class SnmpBrowserGUI:
         condition_combo.grid(row=1, column=1, padx=5, pady=5)
         condition_combo.set("less_than")
 
-        ttk.Label(fields_frame, text="Soglia:").grid(row=1, column=2, sticky='e', padx=5, pady=5)
+        ttk.Label(fields_frame, text="Threshold:").grid(row=1, column=2, sticky='e', padx=5, pady=5)
         threshold_entry = ttk.Entry(fields_frame, width=30)
         threshold_entry.grid(row=1, column=3, padx=5, pady=5)
 
-        ttk.Label(fields_frame, text="Azione:").grid(row=2, column=0, sticky='e', padx=5, pady=5)
+        ttk.Label(fields_frame, text="Action:").grid(row=2, column=0, sticky='e', padx=5, pady=5)
         action_combo = ttk.Combobox(fields_frame, values=["notify", "email", "both"], width=27)
         action_combo.grid(row=2, column=1, padx=5, pady=5)
         action_combo.set("notify")
 
-        ttk.Label(fields_frame, text="Email (se richiesta):").grid(row=2, column=2, sticky='e', padx=5, pady=5)
+        ttk.Label(fields_frame, text="Email (if required):").grid(row=2, column=2, sticky='e', padx=5, pady=5)
         email_entry = ttk.Entry(fields_frame, width=30)
         email_entry.grid(row=2, column=3, padx=5, pady=5)
 
@@ -1802,7 +1818,7 @@ class SnmpBrowserGUI:
             """Carica una regola per la modifica"""
             selection = rules_tree.selection()
             if not selection:
-                messagebox.showwarning("Avviso", "Selezionare una regola da modificare")
+                messagebox.showwarning("Notice", "Select a rule to edit")
                 return
 
             item = selection[0]
@@ -1835,7 +1851,7 @@ class SnmpBrowserGUI:
                     editing_rule_id.set(rule_id)
 
                     # Cambia etichetta del frame
-                    new_rule_frame.config(text="Modifica Regola")
+                    new_rule_frame.config(text="Edit Rule")
 
         def save_rule():
             """Aggiunge o modifica una regola"""
@@ -1847,7 +1863,7 @@ class SnmpBrowserGUI:
             email = email_entry.get()
 
             if not oid or not name or not threshold:
-                messagebox.showwarning("Avviso", "Compilare tutti i campi richiesti")
+                messagebox.showwarning("Notice", "Fill in all required fields")
                 return
 
             rule = AlertRule(oid, name, condition, threshold, action, email)
@@ -1872,7 +1888,7 @@ class SnmpBrowserGUI:
             condition_combo.set("less_than")
             action_combo.set("notify")
             editing_rule_id.set("")
-            new_rule_frame.config(text="Nuova/Modifica Regola")
+            new_rule_frame.config(text="New/Edit Rule")
 
             # Aggiorna lista
             refresh_rules_list()
@@ -1881,17 +1897,17 @@ class SnmpBrowserGUI:
             self.update_alert_counts()
 
             if editing_rule_id.get():
-                self.logger.info(f"Modificata regola: {name}")
-                messagebox.showinfo("Successo", "Regola modificata con successo")
+                self.logger.info(f"Rule edited: {name}")
+                messagebox.showinfo("Success", "Rule edited successfully")
             else:
-                self.logger.info(f"Aggiunta nuova regola: {name}")
-                messagebox.showinfo("Successo", "Regola aggiunta con successo")
+                self.logger.info(f"Added new rule: {name}")
+                messagebox.showinfo("Success", "Rule added successfully")
 
         def remove_rule():
             """Rimuove la regola selezionata"""
             selection = rules_tree.selection()
             if not selection:
-                messagebox.showwarning("Avviso", "Selezionare una regola da rimuovere")
+                messagebox.showwarning("Notice", "Select a rule to remove")
                 return
 
             item = selection[0]
@@ -1901,13 +1917,13 @@ class SnmpBrowserGUI:
             if values and tags:
                 rule_id = tags[0]
                 if rule_id in self.alert_rules:
-                    if messagebox.askyesno("Conferma", f"Rimuovere la regola '{values[1]}'?"):
+                    if messagebox.askyesno("Confirm", f"Remove the rule '{values[1]}'?"):
                         del self.alert_rules[rule_id]
                         refresh_rules_list()
                         self.save_rules()
                         self.update_alert_counts()
-                        self.logger.info(f"Rimossa regola per OID: {values[0]}")
-                        messagebox.showinfo("Successo", "Regola rimossa")
+                        self.logger.info(f"Removed rule for OID: {values[0]}")
+                        messagebox.showinfo("Success", "Rule removed")
 
         def clear_form():
             """Pulisce il form"""
@@ -1918,17 +1934,17 @@ class SnmpBrowserGUI:
             condition_combo.set("less_than")
             action_combo.set("notify")
             editing_rule_id.set("")
-            new_rule_frame.config(text="Nuova/Modifica Regola")
+            new_rule_frame.config(text="New/Edit Rule")
 
         # Pulsanti
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=tk.X)
 
-        ttk.Button(button_frame, text="💾 Salva Regola", command=save_rule).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="✏️ Modifica Selezionata", command=load_rule_for_edit).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="➖ Rimuovi Selezionata", command=remove_rule).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="🧹 Pulisci Form", command=clear_form).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Chiudi", command=rules_window.destroy).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="💾 Save Rule", command=save_rule).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="✏️ Edit Selected", command=load_rule_for_edit).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="➖ Remove Selected", command=remove_rule).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="🧹 Clear Form", command=clear_form).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Close", command=rules_window.destroy).pack(side=tk.RIGHT, padx=5)
 
         # Bind doppio click per modifica rapida
         rules_tree.bind("<Double-1>", lambda e: load_rule_for_edit())
@@ -1965,12 +1981,12 @@ class SnmpBrowserGUI:
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Griglia configurazione con spaziatura uniforme
-        ttk.Label(main_frame, text="Server SMTP:").grid(row=0, column=0, sticky='e', padx=5, pady=8)
+        ttk.Label(main_frame, text="SMTP Server:").grid(row=0, column=0, sticky='e', padx=5, pady=8)
         smtp_server = ttk.Entry(main_frame, width=30)
         smtp_server.grid(row=0, column=1, padx=5, pady=8)
         smtp_server.insert(0, self.email_config.smtp_server)
 
-        ttk.Label(main_frame, text="Porta:").grid(row=1, column=0, sticky='e', padx=5, pady=8)
+        ttk.Label(main_frame, text="Port:").grid(row=1, column=0, sticky='e', padx=5, pady=8)
         smtp_port = ttk.Entry(main_frame, width=30)
         smtp_port.grid(row=1, column=1, padx=5, pady=8)
         smtp_port.insert(0, str(self.email_config.smtp_port))
@@ -1986,21 +2002,21 @@ class SnmpBrowserGUI:
         if self.email_config.smtp_password_encrypted:
             smtp_password.insert(0, self.email_config.get_password())
 
-        ttk.Label(main_frame, text="Email Mittente:").grid(row=4, column=0, sticky='e', padx=5, pady=8)
+        ttk.Label(main_frame, text="Sender Email:").grid(row=4, column=0, sticky='e', padx=5, pady=8)
         from_email = ttk.Entry(main_frame, width=30)
         from_email.grid(row=4, column=1, padx=5, pady=8)
         from_email.insert(0, self.email_config.from_email)
 
         use_tls = tk.BooleanVar(value=self.email_config.use_tls)
-        ttk.Checkbutton(main_frame, text="Usa TLS", variable=use_tls).grid(row=5, column=1, sticky='w', padx=5, pady=8)
+        ttk.Checkbutton(main_frame, text="Use TLS", variable=use_tls).grid(row=5, column=1, sticky='w', padx=5, pady=8)
 
         # Frame pulsanti centrato
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=6, column=0, columnspan=2, pady=20)
 
-        ttk.Button(button_frame, text="💾 Salva", command=lambda: save_email_config()).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="💾 Save", command=lambda: save_email_config()).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="📧 Test", command=lambda: test_email()).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Annulla", command=email_window.destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=email_window.destroy).pack(side=tk.LEFT, padx=5)
 
         # Centra il contenuto
         main_frame.grid_columnconfigure(1, weight=1)
@@ -2018,36 +2034,36 @@ class SnmpBrowserGUI:
             self.email_config.use_tls = use_tls.get()
 
             self.save_email_config_to_file()
-            self.logger.info("Configurazione email salvata")
-            messagebox.showinfo("Successo", "Configurazione email salvata")
+            self.logger.info("Email configuration saved")
+            messagebox.showinfo("Success", "Email configuration saved")
             email_window.destroy()
 
         def test_email():
             """Test invio email"""
             save_email_config()
 
-            test_email = simpledialog.askstring("Test Email", "Inserisci email di test:")
+            test_email = simpledialog.askstring("Test Email", "Enter test email address:")
             if test_email:
                 success, msg = self.email_config.send_alert_email(
                     test_email,
-                    "Test Configurazione",
-                    "Questa è una email di test dal sistema di monitoring SNMP."
+                    "Test Configuration",
+                    "This is a test email from the SNMP monitoring system."
                 )
 
                 if success:
-                    self.logger.info("Test email inviato con successo")
-                    messagebox.showinfo("Successo", "Email di test inviata con successo!")
+                    self.logger.info("Test email sent successfully")
+                    messagebox.showinfo("Success", "Test email sent successfully!")
                 else:
-                    self.logger.error(f"Test email fallito: {msg}")
-                    messagebox.showerror("Errore", f"Errore invio email: {msg}")
+                    self.logger.error(f"Test email failed: {msg}")
+                    messagebox.showerror("Error", f"Error sending email: {msg}")
 
         # Pulsanti
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=6, column=0, columnspan=2, pady=20)
 
-        ttk.Button(button_frame, text="💾 Salva", command=save_email_config).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="💾 Save", command=save_email_config).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="📧 Test", command=test_email).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Annulla", command=email_window.destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=email_window.destroy).pack(side=tk.LEFT, padx=5)
 
     def check_alert_rules(self):
         """CORRETTO: Controlla tutte le regole di alert"""
@@ -2083,7 +2099,7 @@ class SnmpBrowserGUI:
                     current_value = client.get(rule.oid)
 
                 except Exception as e:
-                    self.logger.error(f"Errore controllo regola {rule.name}: {str(e)}")
+                    self.logger.error(f"Error checking rule {rule.name}: {str(e)}")
                     continue
 
             if current_value is not None:
@@ -2109,7 +2125,7 @@ class SnmpBrowserGUI:
                         self.alert_history.append(alert_entry)
 
                         self.logger.warning(
-                            f"Alert triggerato: {rule.name} - valore {current_value} {rule.condition} {rule.threshold}"
+                            f"Alert triggered: {rule.name} - value {current_value} {rule.condition} {rule.threshold}"
                         )
                 else:
                     # Reset regola se non più violata
@@ -2143,8 +2159,8 @@ class SnmpBrowserGUI:
         """NUOVO: Mostra una notifica desktop per l'alert"""
         message = f"⚠️ ALERT: {alert.name}\n"
         message += f"OID: {alert.oid}\n"
-        message += f"Condizione: {alert.condition} {alert.threshold}\n"
-        message += f"Valore attuale: {alert.last_value}"
+        message += f"Condition: {alert.condition} {alert.threshold}\n"
+        message += f"Current value: {alert.last_value}"
 
         # Mostra popup
         messagebox.showwarning(f"🚨 Alert: {alert.name}", message)
@@ -2157,14 +2173,14 @@ class SnmpBrowserGUI:
         subject = f"Alert: {alert.name}"
 
         body = f"""
-        Sistema di Monitoring SNMP - ALERT
+        SNMP Monitoring System - ALERT
 
-        Regola: {alert.name}
+        Rule: {alert.name}
         OID: {alert.oid}
         Host: {self.host_var.get()}
 
-        Condizione violata: {alert.condition} {alert.threshold}
-        Valore attuale: {alert.last_value}
+        Violated condition: {alert.condition} {alert.threshold}
+        Current value: {alert.last_value}
 
         Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
@@ -2172,21 +2188,21 @@ class SnmpBrowserGUI:
         success, msg = self.email_config.send_alert_email(alert.email_to, subject, body)
 
         if success:
-            self.logger.info(f"Email alert inviata a {alert.email_to}")
+            self.logger.info(f"Alert email sent to {alert.email_to}")
         else:
-            self.logger.error(f"Errore invio email alert: {msg}")
+            self.logger.error(f"Error sending alert email: {msg}")
 
     def update_alert_status(self, has_alerts):
         """CORRETTO: Aggiorna lo stato visivo degli alert"""
         if has_alerts:
             self.alert_active = True
             self.update_status_indicator("alert")
-            self.alert_status_var.set("⚠️ ALERT ATTIVI - Verificare le regole violate")
+            self.alert_status_var.set("⚠️ ACTIVE ALERTS - Check the violated rules")
             self.alert_status_label.config(foreground="red")
         else:
             self.alert_active = False
             self.update_status_indicator("ok")
-            self.alert_status_var.set("✅ Sistema OK - Nessun alert attivo")
+            self.alert_status_var.set("✅ System OK - No active alerts")
             self.alert_status_label.config(foreground="green")
 
         # Aggiorna ultimo alert
@@ -2213,10 +2229,11 @@ class SnmpBrowserGUI:
 
         # Treeview per storia
         columns = ("Timestamp", "Regola", "OID", "Valore", "Soglia", "Condizione")
+        column_labels = {"Regola": "Rule", "Valore": "Value", "Soglia": "Threshold", "Condizione": "Condition"}
         history_tree = ttk.Treeview(main_frame, columns=columns, show="headings", height=15)
 
         for col in columns:
-            history_tree.heading(col, text=col)
+            history_tree.heading(col, text=column_labels.get(col, col))
             history_tree.column(col, width=120)
 
         # Popola con storia (ordine inverso, più recenti prima)
@@ -2242,15 +2259,15 @@ class SnmpBrowserGUI:
         button_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
 
         def clear_history():
-            if messagebox.askyesno("Conferma", "Cancellare tutta la storia degli alert?"):
+            if messagebox.askyesno("Confirm", "Clear the entire alert history?"):
                 self.alert_history.clear()
                 for item in history_tree.get_children():
                     history_tree.delete(item)
                 self.update_alert_counts()
-                self.logger.info("Storia alert cancellata")
+                self.logger.info("Alert history cleared")
 
-        ttk.Button(button_frame, text="🧹 Pulisci Storia", command=clear_history).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Chiudi", command=history_window.destroy).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="🧹 Clear History", command=clear_history).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Close", command=history_window.destroy).pack(side=tk.RIGHT, padx=5)
 
     def clear_alerts(self):
         """NUOVO: Pulisce gli alert attivi"""
@@ -2261,13 +2278,13 @@ class SnmpBrowserGUI:
         self.update_alert_status(False)
         self.update_alert_counts()
         self.logger.info("Alert resettati")
-        messagebox.showinfo("Info", "Alert resettati")
+        messagebox.showinfo("Info", "Alerts reset")
 
     def create_rule_from_selected(self):
         """NUOVO: Crea o modifica una regola dall'elemento selezionato nel browser"""
         selection = self.results_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Selezionare un elemento")
+            messagebox.showwarning("Notice", "Select an item")
             return
 
         item = selection[0]
@@ -2288,7 +2305,7 @@ class SnmpBrowserGUI:
         """NUOVO: Aggiunge o modifica una regola all'elemento selezionato nel dashboard"""
         selection = self.dashboard_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Selezionare un elemento dal dashboard")
+            messagebox.showwarning("Notice", "Select an item from the dashboard")
             return
 
         item = selection[0]
@@ -2337,7 +2354,7 @@ class SnmpBrowserGUI:
         info_label.pack(fill=tk.X, pady=(0, 15))
 
         if existing_rule:
-            ttk.Label(main_frame, text="⚠️ Modifica regola esistente",
+            ttk.Label(main_frame, text="⚠️ Edit existing rule",
                       foreground="blue", font=('TkDefaultFont', 9, 'bold')).pack(pady=(0, 10))
 
         # Frame per i campi
@@ -2345,7 +2362,7 @@ class SnmpBrowserGUI:
         fields_frame.pack(fill=tk.X, pady=(0, 15))
 
         # Condizione
-        ttk.Label(fields_frame, text="Condizione:").grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(fields_frame, text="Condition:").grid(row=0, column=0, sticky='w', padx=(0, 10), pady=5)
         condition_var = tk.StringVar()
         condition_combo = ttk.Combobox(fields_frame, textvariable=condition_var, values=[
             "less_than", "less_than_or_equal", "greater_than", "greater_than_or_equal",
@@ -2354,12 +2371,12 @@ class SnmpBrowserGUI:
         condition_combo.grid(row=0, column=1, sticky='w', pady=5)
 
         # Soglia
-        ttk.Label(fields_frame, text="Soglia:").grid(row=1, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(fields_frame, text="Threshold:").grid(row=1, column=0, sticky='w', padx=(0, 10), pady=5)
         threshold_entry = ttk.Entry(fields_frame, width=27)
         threshold_entry.grid(row=1, column=1, sticky='w', pady=5)
 
         # Azione
-        ttk.Label(fields_frame, text="Azione:").grid(row=2, column=0, sticky='w', padx=(0, 10), pady=5)
+        ttk.Label(fields_frame, text="Action:").grid(row=2, column=0, sticky='w', padx=(0, 10), pady=5)
         action_var = tk.StringVar()
         action_combo = ttk.Combobox(fields_frame, textvariable=action_var, values=[
             "notify", "email", "both"
@@ -2389,7 +2406,7 @@ class SnmpBrowserGUI:
         def save_rule():
             threshold = threshold_entry.get()
             if not threshold:
-                messagebox.showwarning("Avviso", "Inserire una soglia")
+                messagebox.showwarning("Notice", "Enter a threshold")
                 return
 
             # Crea o aggiorna la regola
@@ -2417,11 +2434,11 @@ class SnmpBrowserGUI:
             self.update_alert_counts()
 
             if existing_rule:
-                self.logger.info(f"Modificata regola: {name}")
-                messagebox.showinfo("✅ Successo", "Regola modificata con successo")
+                self.logger.info(f"Rule edited: {name}")
+                messagebox.showinfo("✅ Success", "Rule edited successfully")
             else:
-                self.logger.info(f"Creata regola: {name}")
-                messagebox.showinfo("✅ Successo", "Regola creata con successo")
+                self.logger.info(f"Rule created: {name}")
+                messagebox.showinfo("✅ Success", "Rule created successfully")
 
             dialog.destroy()
 
@@ -2431,7 +2448,7 @@ class SnmpBrowserGUI:
             condition = condition_var.get()
 
             if not threshold:
-                messagebox.showwarning("Avviso", "Inserire una soglia per testare")
+                messagebox.showwarning("Notice", "Enter a threshold to test")
                 return
 
             # Mappa per visualizzazione condizioni user-friendly
@@ -2465,24 +2482,24 @@ class SnmpBrowserGUI:
                 result = test_rule_obj.check(test_value)
 
                 if result:
-                    messagebox.showinfo("🔴 Test Regola",
-                                        f"La regola SCATTEREBBE con il valore attuale!\n\n"
-                                        f"Valore: {current_value}\n"
-                                        f"Condizione: {condition_map.get(condition, condition)}\n"
-                                        f"Soglia: {threshold}")
+                    messagebox.showinfo("🔴 Test Rule",
+                                        f"The rule WOULD trigger with the current value!\n\n"
+                                        f"Value: {current_value}\n"
+                                        f"Condition: {condition_map.get(condition, condition)}\n"
+                                        f"Threshold: {threshold}")
                 else:
-                    messagebox.showinfo("🟢 Test Regola",
-                                        f"La regola NON scatterebbe con il valore attuale.\n\n"
-                                        f"Valore: {current_value}\n"
-                                        f"Condizione: {condition_map.get(condition, condition)}\n"
-                                        f"Soglia: {threshold}")
+                    messagebox.showinfo("🟢 Test Rule",
+                                        f"The rule would NOT trigger with the current value.\n\n"
+                                        f"Value: {current_value}\n"
+                                        f"Condition: {condition_map.get(condition, condition)}\n"
+                                        f"Threshold: {threshold}")
             except Exception as e:
-                messagebox.showerror("Errore Test", f"Errore durante il test: {str(e)}")
+                messagebox.showerror("Test Error", f"Error during test: {str(e)}")
 
         # PULSANTI (UNA VOLTA SOLA!)
-        ttk.Button(button_frame, text="💾 Salva", command=save_rule).pack(side=tk.LEFT, padx=10)
+        ttk.Button(button_frame, text="💾 Save", command=save_rule).pack(side=tk.LEFT, padx=10)
         ttk.Button(button_frame, text="🧪 Test", command=test_rule).pack(side=tk.LEFT, padx=10)
-        ttk.Button(button_frame, text="❌ Annulla", command=dialog.destroy).pack(side=tk.LEFT, padx=10)
+        ttk.Button(button_frame, text="❌ Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=10)
 
         # Focus sulla soglia
         threshold_entry.focus()
@@ -2497,13 +2514,13 @@ class SnmpBrowserGUI:
                         self.root.after(0, self.check_alert_rules)
                         self.root.after(0, self.save_historical_data)
                 except Exception as e:
-                    self.logger.error(f"Errore monitoring regole: {e}")
+                    self.logger.error(f"Error monitoring rules: {e}")
 
                 time.sleep(10)  # Controlla ogni 10 secondi
 
         monitor_thread = threading.Thread(target=monitor_worker, daemon=True)
         monitor_thread.start()
-        self.logger.info("Monitoring regole avviato")
+        self.logger.info("Rule monitoring started")
 
     # ==================== FUNZIONI PER GRAFICI ====================
 
@@ -2511,7 +2528,7 @@ class SnmpBrowserGUI:
         """NUOVO: Mostra il grafico per l'elemento selezionato nel dashboard"""
         selection = self.dashboard_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Selezionare un elemento dal dashboard")
+            messagebox.showwarning("Notice", "Select an item from the dashboard")
             return
 
         item = selection[0]
@@ -2528,7 +2545,7 @@ class SnmpBrowserGUI:
                 # Apri finestra grafico
                 GraphWindow(self.root, oid, name, data_points, self.logger)
             else:
-                messagebox.showinfo("Info", "Nessun dato storico disponibile per questo elemento")
+                messagebox.showinfo("Info", "No historical data available for this item")
 
     def on_dashboard_selection(self, event):
         """NUOVO: Gestisce la selezione nel dashboard per aggiornare il mini-grafico"""
@@ -2555,11 +2572,11 @@ class SnmpBrowserGUI:
         """NUOVO: Aggiorna il pannello delle statistiche"""
         self.stats_text.delete(1.0, tk.END)
 
-        stats = f"📊 STATISTICHE\n"
+        stats = f"📊 STATISTICS\n"
         stats += "=" * 30 + "\n\n"
         stats += f"Host: {host}\n"
         stats += f"OID: {oid}\n"
-        stats += f"Nome: {name}\n\n"
+        stats += f"Name: {name}\n\n"
 
         # Ottieni dati storici
         key = f"{host}_{oid}"
@@ -2579,11 +2596,11 @@ class SnmpBrowserGUI:
                         pass
 
                 if values:
-                    stats += f"📈 Ultimi {len(values)} valori:\n"
+                    stats += f"📈 Last {len(values)} values:\n"
                     stats += f"  Min: {min(values):.2f}\n"
                     stats += f"  Max: {max(values):.2f}\n"
-                    stats += f"  Media: {sum(values) / len(values):.2f}\n"
-                    stats += f"  Ultimo: {values[-1]:.2f}\n\n"
+                    stats += f"  Average: {sum(values) / len(values):.2f}\n"
+                    stats += f"  Last: {values[-1]:.2f}\n\n"
 
                     # Trend
                     if len(values) > 1:
@@ -2593,16 +2610,16 @@ class SnmpBrowserGUI:
                         elif trend < 0:
                             stats += f"  Trend: ↘️ {trend:.2f}\n"
                         else:
-                            stats += f"  Trend: ➡️ Stabile\n"
+                            stats += f"  Trend: ➡️ Stable\n"
 
         # Controlla regole associate
         rule_id = f"{host}_{oid}"
         if rule_id in self.alert_rules:
             rule = self.alert_rules[rule_id]
-            stats += f"\n🔔 REGOLA ALERT:\n"
-            stats += f"  Condizione: {rule.condition}\n"
-            stats += f"  Soglia: {rule.threshold}\n"
-            stats += f"  Stato: {'🔴 Attivo' if rule.is_triggered else '🟢 OK'}\n"
+            stats += f"\n🔔 ALERT RULE:\n"
+            stats += f"  Condition: {rule.condition}\n"
+            stats += f"  Threshold: {rule.threshold}\n"
+            stats += f"  Status: {'🔴 Active' if rule.is_triggered else '🟢 OK'}\n"
 
         self.stats_text.insert(1.0, stats)
 
@@ -2666,10 +2683,10 @@ class SnmpBrowserGUI:
             with open(self.historical_data_file, 'w') as f:
                 json.dump(save_data, f, indent=2)
 
-            self.logger.info(f"Salvati dati storici per {len(save_data)} elementi")
+            self.logger.info(f"Saved historical data for {len(save_data)} items")
 
         except Exception as e:
-            self.logger.error(f"Errore salvataggio dati storici: {e}")
+            self.logger.error(f"Error saving historical data: {e}")
             import traceback
             self.logger.error(traceback.format_exc())
 
@@ -2737,13 +2754,13 @@ class SnmpBrowserGUI:
 
                     self.historical_data[key] = data_deque
 
-                self.logger.info(f"Caricati dati storici per {len(self.historical_data)} elementi")
+                self.logger.info(f"Loaded historical data for {len(self.historical_data)} items")
 
                 # Pulisci dati troppo vecchi (più di 24 ore)
                 self.clean_old_historical_data()
 
         except Exception as e:
-            self.logger.error(f"Errore caricamento dati storici: {e}")
+            self.logger.error(f"Error loading historical data: {e}")
             import traceback
             self.logger.error(traceback.format_exc())
 
@@ -2772,10 +2789,10 @@ class SnmpBrowserGUI:
                     del self.historical_data[key]
 
             if cleaned_count > 0:
-                self.logger.info(f"Pulizia dati storici: rimossi {cleaned_count} elementi vecchi")
+                self.logger.info(f"Historical data cleanup: removed {cleaned_count} old items")
 
         except Exception as e:
-            self.logger.error(f"Errore pulizia dati storici: {e}")
+            self.logger.error(f"Error cleaning historical data: {e}")
 
     def update_mini_graph(self, host, oid):
         """NUOVO: Aggiorna il mini-grafico nel dashboard"""
@@ -2787,7 +2804,7 @@ class SnmpBrowserGUI:
             self.mini_graph_canvas.create_text(
                 self.mini_graph_canvas.winfo_width() // 2 if self.mini_graph_canvas.winfo_width() > 1 else 150,
                 100,
-                text="Nessun dato storico",
+                text="No historical data",
                 fill="gray"
             )
             return
@@ -2874,7 +2891,7 @@ class SnmpBrowserGUI:
     def refresh_dashboard(self):
         """Aggiorna dashboard con supporto per dati storici e alert"""
         if not self.saved_values:
-            self.status_var.set("📊 Dashboard vuoto")
+            self.status_var.set("📊 Dashboard empty")
             return
 
         # NUOVO: Salva selezione corrente
@@ -2889,9 +2906,9 @@ class SnmpBrowserGUI:
         for item in self.dashboard_tree.get_children():
             self.dashboard_tree.delete(item)
 
-        self.status_var.set("🔄 Aggiornamento dashboard...")
+        self.status_var.set("🔄 Updating dashboard...")
         self.progress.start()
-        self.logger.info(f"Aggiornamento dashboard: {len(self.saved_values)} elementi")
+        self.logger.info(f"Dashboard update: {len(self.saved_values)} items")
 
         def refresh_worker():
             try:
@@ -3033,7 +3050,7 @@ class SnmpBrowserGUI:
 
                 # Report finale
                 total = len(self.saved_values)
-                self.logger.info(f"Dashboard aggiornato: {success}/{total} OK")
+                self.logger.info(f"Dashboard updated: {success}/{total} OK")
 
                 if errors:
                     self.root.after(0, lambda: self.status_var.set(
@@ -3043,8 +3060,8 @@ class SnmpBrowserGUI:
                         f"✅ Dashboard aggiornato: {total} elementi - {datetime.now().strftime('%H:%M:%S')}"))
 
             except Exception as e:
-                self.logger.error(f"Errore aggiornamento dashboard: {str(e)}")
-                self.root.after(0, lambda: messagebox.showerror("Errore Dashboard", str(e)))
+                self.logger.error(f"Error updating dashboard: {str(e)}")
+                self.root.after(0, lambda: messagebox.showerror("Dashboard Error", str(e)))
             finally:
                 self.root.after(0, lambda: self.progress.stop())
 
@@ -3067,16 +3084,16 @@ class SnmpBrowserGUI:
             interval = 30000  # Default 30 secondi
 
         self.auto_refresh_timer = self.root.after(interval, self.start_auto_refresh)
-        self.status_var.set(f"🔄 Auto-refresh attivo ({self.refresh_interval_var.get()}s)")
-        self.logger.info(f"Auto-refresh attivato: {self.refresh_interval_var.get()}s")
+        self.status_var.set(f"🔄 Auto-refresh active ({self.refresh_interval_var.get()}s)")
+        self.logger.info(f"Auto-refresh enabled: {self.refresh_interval_var.get()}s")
 
     def stop_auto_refresh(self):
         """NUOVO: Ferma auto-refresh del dashboard"""
         if self.auto_refresh_timer:
             self.root.after_cancel(self.auto_refresh_timer)
             self.auto_refresh_timer = None
-        self.status_var.set("⏸️ Auto-refresh disattivato")
-        self.logger.info("Auto-refresh disattivato")
+        self.status_var.set("⏸️ Auto-refresh disabled")
+        self.logger.info("Auto-refresh disabled")
 
     # ==================== FUNZIONI DI SUPPORTO ====================
 
@@ -3089,9 +3106,9 @@ class SnmpBrowserGUI:
         try:
             with open(self.rules_file, 'w') as f:
                 json.dump(rules_data, f, indent=2)
-            self.logger.info("Regole salvate")
+            self.logger.info("Rules saved")
         except Exception as e:
-            self.logger.error(f"Errore salvataggio regole: {e}")
+            self.logger.error(f"Error saving rules: {e}")
 
     def load_rules(self):
         """NUOVO: Carica le regole da file"""
@@ -3103,9 +3120,9 @@ class SnmpBrowserGUI:
                 for rule_id, rule_dict in rules_data.items():
                     self.alert_rules[rule_id] = AlertRule.from_dict(rule_dict)
 
-                self.logger.info(f"Caricate {len(self.alert_rules)} regole")
+                self.logger.info(f"Loaded {len(self.alert_rules)} rules")
         except Exception as e:
-            self.logger.error(f"Errore caricamento regole: {e}")
+            self.logger.error(f"Error loading rules: {e}")
 
     def save_email_config_to_file(self):
         """NUOVO: Salva la configurazione email su file"""
@@ -3115,9 +3132,9 @@ class SnmpBrowserGUI:
             with open(self.email_config_file, 'w') as f:
                 json.dump(config_data, f, indent=2)
 
-            self.logger.info("Configurazione email salvata")
+            self.logger.info("Email configuration saved")
         except Exception as e:
-            self.logger.error(f"Errore salvataggio configurazione email: {e}")
+            self.logger.error(f"Error saving email configuration: {e}")
 
     def load_email_config(self):
         """NUOVO: Carica la configurazione email da file"""
@@ -3127,9 +3144,9 @@ class SnmpBrowserGUI:
                     config_data = json.load(f)
 
                 self.email_config.from_dict(config_data)
-                self.logger.info("Configurazione email caricata")
+                self.logger.info("Email configuration loaded")
         except Exception as e:
-            self.logger.error(f"Errore caricamento configurazione email: {e}")
+            self.logger.error(f"Error loading email configuration: {e}")
 
     # ... [TUTTE LE ALTRE FUNZIONI ORIGINALI] ...
 
@@ -3140,12 +3157,12 @@ class SnmpBrowserGUI:
         if version == "3":
             self.v1v2_frame.pack_forget()
             self.v3_frame.pack(fill=tk.X, padx=5, pady=5)
-            self.logger.info("Passaggio a SNMPv3")
+            self.logger.info("Switching to SNMPv3")
         else:
             if not self.v1v2_frame.winfo_viewable():
                 self.v1v2_frame.pack(side=tk.LEFT, padx=(10, 0))
             self.v3_frame.pack_forget()
-            self.logger.info(f"Passaggio a SNMPv{version}")
+            self.logger.info(f"Switching to SNMPv{version}")
 
     def toggle_password_visibility(self):
         """Mostra/nasconde password v3"""
@@ -3159,38 +3176,38 @@ class SnmpBrowserGUI:
             # Host
             host = self.host_var.get().strip()
             if not host:
-                return False, "Host non può essere vuoto!"
+                return False, "Host cannot be empty!"
 
             # Porta
             port = int(self.port_var.get())
             if port < 1 or port > 65535:
-                return False, "Porta deve essere tra 1 e 65535!"
+                return False, "Port must be between 1 and 65535!"
 
             # Timeout
             timeout = float(self.timeout_var.get())
             if timeout < 0.1 or timeout > 60:
-                return False, "Timeout deve essere tra 0.1 e 60 secondi!"
+                return False, "Timeout must be between 0.1 and 60 seconds!"
 
             # Retries
             retries = int(self.retries_var.get())
             if retries < 0 or retries > 10:
-                return False, "Retries deve essere tra 0 e 10!"
+                return False, "Retries must be between 0 and 10!"
 
             # SNMPv3
             if self.version_var.get() == "3":
                 if not self.v3_user_var.get().strip():
-                    return False, "Username SNMPv3 richiesto!"
+                    return False, "SNMPv3 username required!"
 
                 if self.v3_auth_protocol_var.get() != "noAuth":
                     if len(self.v3_auth_password_var.get()) < 8:
-                        return False, "Password auth deve essere almeno 8 caratteri!"
+                        return False, "Auth password must be at least 8 characters!"
 
                 if self.v3_priv_protocol_var.get() != "noPriv":
                     if len(self.v3_priv_password_var.get()) < 8:
-                        return False, "Password priv deve essere almeno 8 caratteri!"
+                        return False, "Priv password must be at least 8 characters!"
             else:
                 if not self.community_var.get().strip():
-                    return False, "Community string richiesta!"
+                    return False, "Community string required!"
 
             # Test risoluzione host
             try:
@@ -3198,23 +3215,23 @@ class SnmpBrowserGUI:
             except:
                 try:
                     resolved = socket.gethostbyname(host)
-                    self.logger.info(f"Host risolto: {host} -> {resolved}")
+                    self.logger.info(f"Host resolved: {host} -> {resolved}")
                 except:
-                    return False, f"Impossibile risolvere host: {host}"
+                    return False, f"Unable to resolve host: {host}"
 
             # Limiti memoria
             max_results = int(self.max_results_var.get())
             if max_results < 100 or max_results > 100000:
-                return False, "Max risultati deve essere tra 100 e 100000!"
+                return False, "Max results must be between 100 and 100000!"
 
             max_memory = int(self.max_memory_var.get())
             if max_memory < 50 or max_memory > 2000:
-                return False, "Max memoria deve essere tra 50 e 2000 MB!"
+                return False, "Max memory must be between 50 and 2000 MB!"
 
             return True, ""
 
         except ValueError as e:
-            return False, f"Errore validazione: {str(e)}"
+            return False, f"Validation error: {str(e)}"
 
     def create_snmpv3_client(self):
         """Crea client SNMPv3 con gestione sicura"""
@@ -3253,11 +3270,11 @@ class SnmpBrowserGUI:
                 retries=int(self.retries_var.get())
             )
 
-            self.logger.info(f"Client SNMPv3 creato per {self.host_var.get()}")
+            self.logger.info(f"SNMPv3 client created for {self.host_var.get()}")
             return client
 
         except Exception as e:
-            self.logger.error(f"Errore creazione client v3: {str(e)}")
+            self.logger.error(f"Error creating v3 client: {str(e)}")
             raise
 
     def test_connection(self):
@@ -3265,13 +3282,13 @@ class SnmpBrowserGUI:
         # Valida input
         valid, error = self.validate_input()
         if not valid:
-            messagebox.showerror("❌ Errore", error)
+            messagebox.showerror("❌ Error", error)
             return
 
         self.scan_btn.config(state=tk.DISABLED)
-        self.status_var.set("🔌 Test connessione...")
+        self.status_var.set("🔌 Testing connection...")
         self.progress.start()
-        self.logger.info(f"Test connessione a {self.host_var.get()}")
+        self.logger.info(f"Testing connection to {self.host_var.get()}")
 
         thread = threading.Thread(target=self._test_connection_worker, daemon=True)
         thread.start()
@@ -3303,14 +3320,14 @@ class SnmpBrowserGUI:
                 else:
                     sys_desc = str(result)
 
-                self.logger.info("Test connessione riuscito")
+                self.logger.info("Connection test succeeded")
                 self.root.after(0, lambda: self._show_test_success(sys_desc, version_info))
             else:
-                self.logger.warning("Test connessione: nessuna risposta")
+                self.logger.warning("Connection test: no response")
                 self.root.after(0, lambda: self._show_test_warning())
 
         except Exception as e:
-            self.logger.error(f"Test connessione fallito: {str(e)}")
+            self.logger.error(f"Connection test failed: {str(e)}")
             self.root.after(0, lambda: self._show_test_error(str(e)))
         finally:
             self.root.after(0, self._test_completed)
@@ -3321,20 +3338,20 @@ class SnmpBrowserGUI:
                             f"Connessione SNMP stabilita!\n\n"
                             f"📡 Protocollo: {version_info}\n"
                             f"🏢 Sistema: {sys_desc[:100]}...")
-        self.status_var.set("✅ Test riuscito")
+        self.status_var.set("✅ Test successful")
 
     def _show_test_warning(self):
         """Mostra warning test"""
         messagebox.showwarning("⚠️ Test",
-                               "Connettività OK ma SNMP non risponde.\n"
-                               "Verificare community/credenziali.")
-        self.status_var.set("⚠️ SNMP non risponde")
+                               "Connectivity OK but SNMP is not responding.\n"
+                               "Check community/credentials.")
+        self.status_var.set("⚠️ SNMP not responding")
 
     def _show_test_error(self, error_msg):
         """Mostra errore test"""
-        messagebox.showerror("❌ Test Fallito",
-                             f"Test fallito:\n\n{error_msg}")
-        self.status_var.set("❌ Test fallito")
+        messagebox.showerror("❌ Test Failed",
+                             f"Test failed:\n\n{error_msg}")
+        self.status_var.set("❌ Test failed")
 
     def _test_completed(self):
         """Completa test"""
@@ -3348,9 +3365,9 @@ class SnmpBrowserGUI:
     def discover_engine_id(self):
         """Scopre Engine ID funzionante"""
         self.scan_btn.config(state=tk.DISABLED)
-        self.status_var.set("🎯 Discovery Engine ID...")
+        self.status_var.set("🎯 Engine ID Discovery...")
         self.progress.start()
-        self.logger.info("Avvio discovery Engine ID")
+        self.logger.info("Starting Engine ID discovery")
 
         thread = threading.Thread(target=self._discover_engine_worker, daemon=True)
         thread.start()
@@ -3382,14 +3399,14 @@ class SnmpBrowserGUI:
                     'engine_time': processor.engine_time
                 }
 
-                self.logger.info(f"Engine ID scoperto: {engine_id_formatted}")
+                self.logger.info(f"Engine ID discovered: {engine_id_formatted}")
                 self.root.after(0, lambda: self._show_engine_discovery_results(results))
             else:
-                self.logger.warning("Discovery Engine ID fallito")
+                self.logger.warning("Engine ID discovery failed")
                 self.root.after(0, lambda: self._show_engine_discovery_error("Nessuna risposta"))
 
         except Exception as e:
-            self.logger.error(f"Errore discovery: {str(e)}")
+            self.logger.error(f"Discovery error: {str(e)}")
             self.root.after(0, lambda: self._show_engine_discovery_error(str(e)))
         finally:
             self.root.after(0, self._discovery_completed)
@@ -3403,7 +3420,7 @@ class SnmpBrowserGUI:
         result_window.geometry("500x300")
         result_window.transient(self.root)
 
-        ttk.Label(result_window, text="✅ Engine ID Scoperto!",
+        ttk.Label(result_window, text="✅ Engine ID Discovered!",
                   font=('TkDefaultFont', 12, 'bold')).pack(pady=10)
 
         frame = ttk.Frame(result_window)
@@ -3416,15 +3433,15 @@ class SnmpBrowserGUI:
         def copy_engine_id():
             self.root.clipboard_clear()
             self.root.clipboard_append(results['engine_id'])
-            messagebox.showinfo("📋 Copiato", "Engine ID copiato!")
+            messagebox.showinfo("📋 Copied", "Engine ID copied!")
 
-        ttk.Button(result_window, text="📋 Copia", command=copy_engine_id).pack(pady=10)
+        ttk.Button(result_window, text="📋 Copy", command=copy_engine_id).pack(pady=10)
         ttk.Button(result_window, text="OK", command=result_window.destroy).pack()
 
     def _show_engine_discovery_error(self, error_msg):
         """Mostra errore discovery"""
-        messagebox.showerror("❌ Discovery Fallito", f"Impossibile scoprire Engine ID:\n{error_msg}")
-        self.status_var.set("❌ Discovery fallito")
+        messagebox.showerror("❌ Discovery Failed", f"Unable to discover Engine ID:\n{error_msg}")
+        self.status_var.set("❌ Discovery failed")
 
     def _discovery_completed(self):
         """Completa discovery"""
@@ -3439,7 +3456,7 @@ class SnmpBrowserGUI:
         # Validazione
         valid, error = self.validate_input()
         if not valid:
-            messagebox.showerror("❌ Errore", error)
+            messagebox.showerror("❌ Error", error)
             return
 
         # Avvia scansione
@@ -3447,7 +3464,7 @@ class SnmpBrowserGUI:
         self.scan_btn.config(state=tk.DISABLED)
         self.stop_btn.config(state=tk.NORMAL)
         self.progress.start()
-        self.status_var.set("🔄 Scansione in corso...")
+        self.status_var.set("🔄 Scanning...")
 
         # Pulisci risultati
         for item in self.results_tree.get_children():
@@ -3460,7 +3477,7 @@ class SnmpBrowserGUI:
             int(self.max_memory_var.get())
         )
 
-        self.logger.info(f"Avvio scansione {self.host_var.get()} con SNMPv{self.version_var.get()}")
+        self.logger.info(f"Starting scan {self.host_var.get()} with SNMPv{self.version_var.get()}")
 
         # Thread scansione
         self.scan_thread = threading.Thread(target=self._scan_worker, daemon=True)
@@ -3508,14 +3525,14 @@ class SnmpBrowserGUI:
 
             for base_oid in oids:
                 if not self.scanning:
-                    self.logger.info("Scansione interrotta dall'utente")
+                    self.logger.info("Scan stopped by user")
                     break
 
                 # Check limiti memoria
                 ok, msg = self.memory_scanner.check_limits()
                 if not ok:
-                    self.logger.warning(f"Limite raggiunto: {msg}")
-                    self.root.after(0, lambda m=msg: messagebox.showwarning("⚠️ Limite", m))
+                    self.logger.warning(f"Limit reached: {msg}")
+                    self.root.after(0, lambda m=msg: messagebox.showwarning("⚠️ Limit", m))
                     break
 
                 try:
@@ -3536,7 +3553,7 @@ class SnmpBrowserGUI:
                         # Check limiti
                         ok, msg = self.memory_scanner.check_limits()
                         if not ok:
-                            self.logger.warning(f"Limite durante processing: {msg}")
+                            self.logger.warning(f"Limit reached during processing: {msg}")
                             break
 
                         self.scan_results[oid] = {
@@ -3551,7 +3568,7 @@ class SnmpBrowserGUI:
 
                     if results:
                         successful_oids += 1
-                        self.logger.info(f"OID {base_oid}: {len(results)} risultati")
+                        self.logger.info(f"OID {base_oid}: {len(results)} results")
 
                 except socket.timeout:
                     error = f"Timeout su {base_oid}"
@@ -3566,30 +3583,30 @@ class SnmpBrowserGUI:
 
                 # Check timeout globale
                 if time.time() - start_time > 300:  # 5 minuti
-                    self.logger.warning("Timeout globale scansione (5 minuti)")
+                    self.logger.warning("Global scan timeout (5 minutes)")
                     self.root.after(0, lambda: messagebox.showwarning(
-                        "⚠️ Timeout", "Scansione interrotta dopo 5 minuti"))
+                        "⚠️ Timeout", "Scan stopped after 5 minutes"))
                     break
 
             # Report finale
             scan_time = time.time() - start_time
             total_results = len(self.scan_results)
 
-            self.logger.info(f"Scansione completata: {total_results} risultati in {scan_time:.1f}s")
+            self.logger.info(f"Scan completed: {total_results} results in {scan_time:.1f}s")
 
             if errors:
-                self.logger.warning(f"Completata con {len(errors)} errori")
+                self.logger.warning(f"Completed with {len(errors)} errors")
                 error_summary = "\n".join(errors[:5])
                 self.root.after(0, lambda: self.status_var.set(
-                    f"⚠️ Completato con {len(errors)} errori in {scan_time:.1f}s"))
+                    f"⚠️ Completed with {len(errors)} errors in {scan_time:.1f}s"))
             else:
                 self.root.after(0, lambda: self.status_var.set(
-                    f"✅ Scansione OK: {total_results} risultati in {scan_time:.1f}s"))
+                    f"✅ Scan OK: {total_results} results in {scan_time:.1f}s"))
 
             self.root.after(0, self._scan_completed)
 
         except Exception as e:
-            self.logger.error(f"Errore critico scansione: {str(e)}\n{traceback.format_exc()}")
+            self.logger.error(f"Critical scan error: {str(e)}\n{traceback.format_exc()}")
             self.root.after(0, lambda: self._scan_error(f"Errore critico: {str(e)}"))
 
     def _add_result_to_tree(self, oid, value):
@@ -3619,10 +3636,10 @@ class SnmpBrowserGUI:
             ))
 
             total = len(self.results_tree.get_children())
-            self.info_var.set(f"Risultati: {total}")
+            self.info_var.set(f"Results: {total}")
 
         except Exception as e:
-            self.logger.error(f"Errore aggiunta risultato: {e}")
+            self.logger.error(f"Error adding result: {e}")
 
     def _get_oid_description(self, oid):
         """Ottiene descrizione OID - PRIMA cerca nei MIB custom, poi nei default"""
@@ -3656,7 +3673,7 @@ class SnmpBrowserGUI:
         self.progress.stop()
 
         total = len(self.results_tree.get_children())
-        self.status_var.set(f"✅ Scansione completata - {total} risultati")
+        self.status_var.set(f"✅ Scan completed - {total} results")
 
         # NUOVO: Controlla regole dopo la scansione
         self.check_alert_rules()
@@ -3669,24 +3686,24 @@ class SnmpBrowserGUI:
         self.scan_btn.config(state=tk.NORMAL)
         self.stop_btn.config(state=tk.DISABLED)
         self.progress.stop()
-        self.status_var.set(f"❌ Errore: {error_msg}")
-        messagebox.showerror("Errore Scansione", error_msg)
+        self.status_var.set(f"❌ Error: {error_msg}")
+        messagebox.showerror("Scan Error", error_msg)
 
     def stop_scan(self):
         """Ferma scansione"""
         self.scanning = False
-        self.status_var.set("⏹️ Interruzione...")
-        self.logger.info("Scansione interrotta dall'utente")
+        self.status_var.set("⏹️ Stopping...")
+        self.logger.info("Scan stopped by user")
 
     def walk_from_selected(self):
         """WALK da elemento selezionato"""
         selection = self.results_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Seleziona un elemento")
+            messagebox.showwarning("Notice", "Select an item")
             return
 
         if not self.client:
-            messagebox.showerror("Errore", "Effettua prima una scansione")
+            messagebox.showerror("Error", "Run a scan first")
             return
 
         item = selection[0]
@@ -3697,16 +3714,16 @@ class SnmpBrowserGUI:
         oid = values[0]
 
         # Conferma per walk potenzialmente grandi
-        if not messagebox.askyesno("🚶 WALK", f"Eseguire WALK da:\n{oid}\n\nPotrebbe generare molti risultati."):
+        if not messagebox.askyesno("🚶 WALK", f"Run WALK from:\n{oid}\n\nThis may generate many results."):
             return
 
         # Pulisci risultati
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
 
-        self.status_var.set(f"🚶 WALK da {oid}...")
+        self.status_var.set(f"🚶 WALK from {oid}...")
         self.progress.start()
-        self.logger.info(f"WALK da OID: {oid}")
+        self.logger.info(f"WALK from OID: {oid}")
 
         # Thread per WALK
         def walk_worker():
@@ -3720,20 +3737,20 @@ class SnmpBrowserGUI:
                 for walk_oid, value in results.items():
                     if count >= int(self.max_results_var.get()):
                         self.root.after(0, lambda: messagebox.showwarning(
-                            "⚠️ Limite", f"Raggiunto limite di {self.max_results_var.get()} risultati"))
+                            "⚠️ Limit", f"Reached limit of {self.max_results_var.get()} results"))
                         break
 
                     self.root.after(0, self._add_result_to_tree, walk_oid, value)
                     count += 1
 
-                self.logger.info(f"WALK completato: {count} risultati")
+                self.logger.info(f"WALK completed: {count} results")
                 self.root.after(0, lambda: self.progress.stop())
-                self.root.after(0, lambda: self.status_var.set(f"✅ WALK completato - {count} risultati"))
+                self.root.after(0, lambda: self.status_var.set(f"✅ WALK completed - {count} results"))
 
             except Exception as e:
-                self.logger.error(f"Errore WALK: {str(e)}")
+                self.logger.error(f"WALK error: {str(e)}")
                 self.root.after(0, lambda: self.progress.stop())
-                self.root.after(0, lambda: messagebox.showerror("Errore WALK", str(e)))
+                self.root.after(0, lambda: messagebox.showerror("WALK Error", str(e)))
 
         threading.Thread(target=walk_worker, daemon=True).start()
 
@@ -3741,11 +3758,11 @@ class SnmpBrowserGUI:
         """SET valore SNMP"""
         selection = self.results_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Seleziona un elemento")
+            messagebox.showwarning("Notice", "Select an item")
             return
 
         if not self.client:
-            messagebox.showerror("Errore", "Effettua prima una scansione")
+            messagebox.showerror("Error", "Run a scan first")
             return
 
         item = selection[0]
@@ -3765,30 +3782,30 @@ class SnmpBrowserGUI:
         dialog.grab_set()
 
         # Info OID
-        info_frame = ttk.LabelFrame(dialog, text="📋 Informazioni OID")
+        info_frame = ttk.LabelFrame(dialog, text="📋 OID Information")
         info_frame.pack(fill=tk.X, padx=10, pady=10)
 
         ttk.Label(info_frame, text=f"OID: {oid}", font=('TkDefaultFont', 9)).pack(anchor=tk.W, padx=5, pady=2)
-        ttk.Label(info_frame, text=f"Tipo attuale: {current_type}").pack(anchor=tk.W, padx=5, pady=2)
-        ttk.Label(info_frame, text=f"Valore attuale: {current_value}").pack(anchor=tk.W, padx=5, pady=2)
+        ttk.Label(info_frame, text=f"Current type: {current_type}").pack(anchor=tk.W, padx=5, pady=2)
+        ttk.Label(info_frame, text=f"Current value: {current_value}").pack(anchor=tk.W, padx=5, pady=2)
 
         # Frame nuovo valore
-        value_frame = ttk.LabelFrame(dialog, text="✏️ Nuovo Valore")
+        value_frame = ttk.LabelFrame(dialog, text="✏️ New Value")
         value_frame.pack(fill=tk.X, padx=10, pady=10)
 
-        ttk.Label(value_frame, text="Valore:").pack(anchor=tk.W, padx=5, pady=5)
+        ttk.Label(value_frame, text="Value:").pack(anchor=tk.W, padx=5, pady=5)
         new_value_var = tk.StringVar(value=current_value)
         value_entry = ttk.Entry(value_frame, textvariable=new_value_var, width=40)
         value_entry.pack(padx=5, pady=5)
 
-        ttk.Label(value_frame, text="Tipo dato:").pack(anchor=tk.W, padx=5, pady=5)
+        ttk.Label(value_frame, text="Data Type:").pack(anchor=tk.W, padx=5, pady=5)
         type_var = tk.StringVar(value="String")
         type_combo = ttk.Combobox(value_frame, textvariable=type_var, state='readonly',
                                   values=["String", "Integer", "IPAddress", "OID", "Gauge", "Counter"])
         type_combo.pack(padx=5, pady=5)
 
         # Warning
-        warning_label = ttk.Label(dialog, text="⚠️ ATTENZIONE: SET modifica valori sul dispositivo!",
+        warning_label = ttk.Label(dialog, text="⚠️ WARNING: SET modifies values on the device!",
                                   foreground="red")
         warning_label.pack(pady=10)
 
@@ -3819,33 +3836,33 @@ class SnmpBrowserGUI:
 
                 # Esegui SET
                 if self.client.set(oid, snmp_value):
-                    messagebox.showinfo("✅ SET OK", "Valore impostato con successo!")
+                    messagebox.showinfo("✅ SET OK", "Value set successfully!")
                     dialog.destroy()
 
                     # Aggiorna valore nel tree
                     self.get_single_oid(oid)
-                    self.logger.info("SET completato con successo")
+                    self.logger.info("SET completed successfully")
                 else:
-                    messagebox.showerror("❌ SET Fallito", "Impossibile impostare il valore")
-                    self.logger.error("SET fallito")
+                    messagebox.showerror("❌ SET Failed", "Unable to set the value")
+                    self.logger.error("SET failed")
 
             except Exception as e:
                 error_msg = f"Errore SET: {str(e)}"
                 self.logger.error(error_msg)
-                messagebox.showerror("❌ Errore", error_msg)
+                messagebox.showerror("❌ Error", error_msg)
 
         # Pulsanti
         btn_frame = ttk.Frame(dialog)
         btn_frame.pack(pady=10)
 
-        ttk.Button(btn_frame, text="✅ Applica", command=do_set).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="❌ Annulla", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="✅ Apply", command=do_set).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="❌ Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def get_selected(self):
         """GET su elemento selezionato"""
         selection = self.results_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Seleziona elemento")
+            messagebox.showwarning("Notice", "Select item")
             return
 
         item = selection[0]
@@ -3856,7 +3873,7 @@ class SnmpBrowserGUI:
     def get_single_oid(self, oid):
         """GET singolo OID"""
         if not self.client:
-            messagebox.showerror("Errore", "Effettua prima una scansione")
+            messagebox.showerror("Error", "Run a scan first")
             return
 
         try:
@@ -3871,8 +3888,8 @@ class SnmpBrowserGUI:
 
                 messagebox.showinfo("🔍 GET Result",
                                     f"OID: {oid}\n"
-                                    f"Valore: {value}\n"
-                                    f"Tipo: {type(result).__name__}")
+                                    f"Value: {value}\n"
+                                    f"Type: {type(result).__name__}")
 
                 # Aggiorna nel tree se presente
                 for item in self.results_tree.get_children():
@@ -3884,16 +3901,16 @@ class SnmpBrowserGUI:
                         ))
                         break
             else:
-                messagebox.showwarning("GET Result", f"Nessun valore per: {oid}")
+                messagebox.showwarning("GET Result", f"No value for: {oid}")
 
         except Exception as e:
-            self.logger.error(f"Errore GET: {str(e)}")
-            messagebox.showerror("Errore GET", str(e))
+            self.logger.error(f"GET error: {str(e)}")
+            messagebox.showerror("GET Error", str(e))
 
     def full_walk(self):
         """Walk completo"""
-        if not messagebox.askyesno("🌊 Walk Completo",
-                                   "Il walk completo può richiedere MOLTO tempo e memoria.\n\n"
+        if not messagebox.askyesno("🌊 Full Walk",
+                                   "The full walk may take A LOT of time and memory.\n\n"
                                    "Continuare?"):
             return
 
@@ -3906,7 +3923,7 @@ class SnmpBrowserGUI:
         self.scan_btn.config(state=tk.DISABLED)
         self.stop_btn.config(state=tk.NORMAL)
         self.progress.start()
-        self.status_var.set("🌊 Walk completo in corso...")
+        self.status_var.set("🌊 Full walk in progress...")
 
         # Inizializza scanner con limiti
         self.memory_scanner = MemoryLimitedScanner(
@@ -3914,7 +3931,7 @@ class SnmpBrowserGUI:
             int(self.max_memory_var.get())
         )
 
-        self.logger.info("Avvio walk completo")
+        self.logger.info("Starting full walk")
 
         def walk_worker():
             try:
@@ -3933,7 +3950,7 @@ class SnmpBrowserGUI:
                     )
 
                 # Walk dalla radice
-                self.logger.info("Walk da OID radice: 1")
+                self.logger.info("Walk from root OID: 1")
 
                 if self.version_var.get() == "2c" or self.version_var.get() == "3":
                     results = client.bulk_walk("1", max_repetitions=50)
@@ -3944,14 +3961,14 @@ class SnmpBrowserGUI:
                 count = 0
                 for oid, value in results.items():
                     if not self.scanning:
-                        self.logger.info("Walk interrotto dall'utente")
+                        self.logger.info("Walk stopped by user")
                         break
 
                     # Check limiti
                     ok, msg = self.memory_scanner.check_limits()
                     if not ok:
-                        self.logger.warning(f"Walk interrotto per limite: {msg}")
-                        self.root.after(0, lambda m=msg: messagebox.showwarning("⚠️ Limite", m))
+                        self.logger.warning(f"Walk stopped due to limit: {msg}")
+                        self.root.after(0, lambda m=msg: messagebox.showwarning("⚠️ Limit", m))
                         break
 
                     self.scan_results[oid] = {
@@ -3966,14 +3983,14 @@ class SnmpBrowserGUI:
 
                     count += 1
                     if count % 100 == 0:
-                        self.root.after(0, lambda c=count: self.status_var.set(f"🌊 Walk: {c} OID trovati..."))
+                        self.root.after(0, lambda c=count: self.status_var.set(f"🌊 Walk: {c} OIDs found..."))
 
-                self.logger.info(f"Walk completato: {count} OID")
+                self.logger.info(f"Walk completed: {count} OIDs")
                 self.root.after(0, lambda c=count: self.status_var.set(f"✅ Walk completato: {count} OID"))
 
             except Exception as e:
-                self.logger.error(f"Errore walk completo: {str(e)}")
-                self.root.after(0, lambda: messagebox.showerror("Errore Walk", str(e)))
+                self.logger.error(f"Full walk error: {str(e)}")
+                self.root.after(0, lambda: messagebox.showerror("Walk Error", str(e)))
             finally:
                 self.scanning = False
                 self.root.after(0, lambda: self.scan_btn.config(state=tk.NORMAL))
@@ -3985,7 +4002,7 @@ class SnmpBrowserGUI:
     def export_results(self):
         """Esporta risultati in tutti i formati"""
         if not self.scan_results:
-            messagebox.showwarning("⚠️ Avviso", "Nessun risultato da esportare")
+            messagebox.showwarning("⚠️ Notice", "No results to export")
             return
 
         filename = filedialog.asksaveasfilename(
@@ -4005,7 +4022,7 @@ class SnmpBrowserGUI:
             return
 
         try:
-            self.logger.info(f"Export risultati in: {filename}")
+            self.logger.info(f"Exporting results to: {filename}")
 
             if filename.endswith('.json'):
                 # Export JSON
@@ -4035,7 +4052,7 @@ class SnmpBrowserGUI:
                 import csv
                 with open(filename, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    writer.writerow(['OID', 'Nome', 'Tipo', 'Valore', 'Stato', 'Timestamp'])
+                    writer.writerow(['OID', 'Name', 'Type', 'Value', 'Status', 'Timestamp'])
 
                     for item in self.results_tree.get_children():
                         values = self.results_tree.item(item)['values']
@@ -4175,14 +4192,14 @@ class SnmpBrowserGUI:
                             f.write(f"Timestamp: {values[5]}\n")
                             f.write("-" * 40 + "\n\n")
 
-            self.logger.info(f"Export completato: {os.path.basename(filename)}")
-            messagebox.showinfo("✅ Export Completato",
-                                f"Risultati esportati con successo!\n\n"
+            self.logger.info(f"Export completed: {os.path.basename(filename)}")
+            messagebox.showinfo("✅ Export Completed",
+                                f"Results exported successfully!\n\n"
                                 f"📄 File: {os.path.basename(filename)}\n"
-                                f"📊 Totale: {len(self.scan_results)} risultati")
+                                f"📊 Total: {len(self.scan_results)} results")
 
             # Chiedi se aprire
-            if messagebox.askyesno("📂 Apri File", "Vuoi aprire il file esportato?"):
+            if messagebox.askyesno("📂 Open File", "Do you want to open the exported file?"):
                 if sys.platform.startswith('win'):
                     os.startfile(filename)
                 elif sys.platform.startswith('darwin'):
@@ -4191,8 +4208,8 @@ class SnmpBrowserGUI:
                     os.system(f'xdg-open "{filename}"')
 
         except Exception as e:
-            self.logger.error(f"Errore export: {str(e)}")
-            messagebox.showerror("❌ Errore Export", f"Errore durante export:\n{str(e)}")
+            self.logger.error(f"Export error: {str(e)}")
+            messagebox.showerror("❌ Export Error", f"Error during export:\n{str(e)}")
 
     def save_config(self):
         """Salva configurazione con credenziali criptate"""
@@ -4224,9 +4241,9 @@ class SnmpBrowserGUI:
         try:
             with open(self.config_file, 'w') as f:
                 json.dump(config, f, indent=2)
-            self.logger.info("Configurazione salvata")
+            self.logger.info("Configuration saved")
         except Exception as e:
-            self.logger.error(f"Errore salvataggio config: {e}")
+            self.logger.error(f"Error saving config: {e}")
 
     def load_config(self):
         """Carica configurazione con decriptazione"""
@@ -4269,10 +4286,10 @@ class SnmpBrowserGUI:
 
                     self.v3_engine_id_var.set(config.get('v3_engine_id', ''))
 
-                self.logger.info("Configurazione caricata")
+                self.logger.info("Configuration loaded")
 
         except Exception as e:
-            self.logger.error(f"Errore caricamento config: {e}")
+            self.logger.error(f"Error loading config: {e}")
 
     def show_settings(self):
         """Mostra dialog impostazioni avanzate"""
@@ -4288,29 +4305,29 @@ class SnmpBrowserGUI:
 
         # Tab Limiti
         limits_frame = ttk.Frame(notebook)
-        notebook.add(limits_frame, text="📊 Limiti")
+        notebook.add(limits_frame, text="📊 Limits")
 
-        ttk.Label(limits_frame, text="Limiti Scansione:",
+        ttk.Label(limits_frame, text="Scan Limits:",
                   font=('TkDefaultFont', 10, 'bold')).pack(pady=10)
 
         limits_info = ttk.Frame(limits_frame)
         limits_info.pack(padx=20, pady=10)
 
-        ttk.Label(limits_info, text="Max Risultati:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(limits_info, text="Max Results:").grid(row=0, column=0, sticky=tk.W, pady=5)
         ttk.Entry(limits_info, textvariable=self.max_results_var, width=10).grid(row=0, column=1, padx=10)
 
-        ttk.Label(limits_info, text="Max Memoria (MB):").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(limits_info, text="Max Memory (MB):").grid(row=1, column=0, sticky=tk.W, pady=5)
         ttk.Entry(limits_info, textvariable=self.max_memory_var, width=10).grid(row=1, column=1, padx=10)
 
         # Tab Logging
         log_frame = ttk.Frame(notebook)
         notebook.add(log_frame, text="📝 Logging")
 
-        ttk.Label(log_frame, text="Configurazione Log:",
+        ttk.Label(log_frame, text="Log Configuration:",
                   font=('TkDefaultFont', 10, 'bold')).pack(pady=10)
 
         log_level_var = tk.StringVar(value="INFO")
-        ttk.Label(log_frame, text="Livello Log:").pack()
+        ttk.Label(log_frame, text="Log Level:").pack()
         ttk.Combobox(log_frame, textvariable=log_level_var,
                      values=["DEBUG", "INFO", "WARNING", "ERROR"],
                      state='readonly').pack(pady=5)
@@ -4318,15 +4335,15 @@ class SnmpBrowserGUI:
         def apply_log_level():
             level = getattr(logging, log_level_var.get())
             self.logger.setLevel(level)
-            messagebox.showinfo("✅", f"Livello log impostato a {log_level_var.get()}")
+            messagebox.showinfo("✅", f"Log level set to {log_level_var.get()}")
 
-        ttk.Button(log_frame, text="Applica", command=apply_log_level).pack(pady=10)
+        ttk.Button(log_frame, text="Apply", command=apply_log_level).pack(pady=10)
 
         # Tab Sicurezza
         security_frame = ttk.Frame(notebook)
-        notebook.add(security_frame, text="🔐 Sicurezza")
+        notebook.add(security_frame, text="🔐 Security")
 
-        ttk.Label(security_frame, text="Opzioni Sicurezza:",
+        ttk.Label(security_frame, text="Security Options:",
                   font=('TkDefaultFont', 10, 'bold')).pack(pady=10)
 
         def clear_passwords():
@@ -4339,9 +4356,9 @@ class SnmpBrowserGUI:
             self.credential_manager.secure_delete(self.v3_priv_password_var.get())
 
             gc.collect()
-            messagebox.showinfo("✅", "Password cancellate dalla memoria")
+            messagebox.showinfo("✅", "Passwords cleared from memory")
 
-        ttk.Button(security_frame, text="🗑️ Cancella Password dalla Memoria",
+        ttk.Button(security_frame, text="🗑️ Clear Passwords from Memory",
                    command=clear_passwords).pack(pady=10)
 
         # Pulsanti
@@ -4349,7 +4366,7 @@ class SnmpBrowserGUI:
         btn_frame.pack(pady=10)
 
         ttk.Button(btn_frame, text="✅ OK", command=settings_window.destroy).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="❌ Annulla", command=settings_window.destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="❌ Cancel", command=settings_window.destroy).pack(side=tk.LEFT, padx=5)
 
     def show_log_viewer(self):
         """Visualizza log file"""
@@ -4376,15 +4393,15 @@ class SnmpBrowserGUI:
 
         # Carica ultimo log
         try:
-            log_file = os.path.join("logs", f"snmp_browser_{datetime.now().strftime('%Y%m%d')}.log")
+            log_file = os.path.join(self.log_dir, f"snmp_browser_{datetime.now().strftime('%Y%m%d')}.log")
             if os.path.exists(log_file):
                 with open(log_file, 'r') as f:
                     text.insert(tk.END, f.read())
                 text.see(tk.END)
             else:
-                text.insert(tk.END, "Nessun file log trovato per oggi.")
+                text.insert(tk.END, "No log file found for today.")
         except Exception as e:
-            text.insert(tk.END, f"Errore caricamento log: {str(e)}")
+            text.insert(tk.END, f"Error loading log: {str(e)}")
 
         text.config(state=tk.DISABLED)
 
@@ -4403,30 +4420,30 @@ class SnmpBrowserGUI:
                 pass
             text.config(state=tk.DISABLED)
 
-        ttk.Button(btn_frame, text="🔄 Aggiorna", command=refresh_log).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="❌ Chiudi", command=log_window.destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="🔄 Refresh", command=refresh_log).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="❌ Close", command=log_window.destroy).pack(side=tk.LEFT, padx=5)
 
     def show_debug_info(self):
         """Mostra informazioni debug"""
         info = f"""
 🐛 DEBUG INFO
 
-Sistema: {sys.platform}
+System: {sys.platform}
 Python: {sys.version}
-Memoria: {psutil.Process().memory_info().rss / 1024 / 1024:.1f}MB
+Memory: {psutil.Process().memory_info().rss / 1024 / 1024:.1f}MB
 CPU: {psutil.cpu_percent()}%
 
-Risultati caricati: {len(self.scan_results)}
-Dashboard elementi: {len(self.saved_values)}
-Regole alert: {len(self.alert_rules)}
-Alert attivi: {sum(1 for r in self.alert_rules.values() if r.is_triggered)}
+Results loaded: {len(self.scan_results)}
+Dashboard items: {len(self.saved_values)}
+Alert rules: {len(self.alert_rules)}
+Active alerts: {sum(1 for r in self.alert_rules.values() if r.is_triggered)}
 
-Log directory: {os.path.abspath('logs')}
+Log directory: {self.log_dir}
 Config file: {os.path.abspath(self.config_file)}
 
-SNMP Client attivo: {'Si' if self.client else 'No'}
-Versione SNMP: {self.version_var.get()}
-Auto-refresh: {'Si' if self.auto_refresh_var.get() else 'No'}
+SNMP Client active: {'Yes' if self.client else 'No'}
+SNMP Version: {self.version_var.get()}
+Auto-refresh: {'Yes' if self.auto_refresh_var.get() else 'No'}
 """
 
         messagebox.showinfo("🐛 Debug Info", info)
@@ -4434,28 +4451,28 @@ Auto-refresh: {'Si' if self.auto_refresh_var.get() else 'No'}
     def show_shortcuts(self):
         """Mostra shortcuts tastiera"""
         shortcuts = """
-⌨️ SHORTCUTS TASTIERA
+⌨️ KEYBOARD SHORTCUTS
 
-Ctrl+S    - Salva configurazione
-Ctrl+O    - Carica configurazione  
-Ctrl+E    - Esporta risultati
-Ctrl+T    - Test connessione
-Ctrl+Q    - Esci
+Ctrl+S    - Save configuration
+Ctrl+O    - Load configuration
+Ctrl+E    - Export results
+Ctrl+T    - Test connection
+Ctrl+Q    - Exit
 
-F1        - Guida
-F5        - Aggiorna dashboard
-ESC       - Interrompi scansione
+F1        - Guide
+F5        - Refresh dashboard
+ESC       - Stop scan
 
-Doppio Click - GET su OID
-Click Destro - Menu contestuale
+Double Click - GET on OID
+Right Click - Context menu
 """
         messagebox.showinfo("⌨️ Shortcuts", shortcuts)
 
     def on_closing(self):
         """Chiusura applicazione con cleanup"""
         if self.scanning:
-            if not messagebox.askyesno("⚠️ Scansione in corso",
-                                       "Scansione in corso. Vuoi davvero uscire?"):
+            if not messagebox.askyesno("⚠️ Scan in progress",
+                                       "Scan in progress. Do you really want to exit?"):
                 return
             self.stop_scan()
 
@@ -4477,7 +4494,7 @@ Click Destro - Menu contestuale
         # Cleanup
         gc.collect()
 
-        self.logger.info("Chiusura applicazione")
+        self.logger.info("Closing application")
         self.logger.info("=" * 60)
 
         self.root.quit()
@@ -4537,10 +4554,10 @@ Click Destro - Menu contestuale
         menu.add_command(label="✏️ SET", command=self.set_value)
         menu.add_command(label="🚶 WALK", command=self.walk_from_selected)
         menu.add_separator()
-        menu.add_command(label="➕ Aggiungi Dashboard", command=self.add_to_dashboard)
-        menu.add_command(label="🔔 Crea Regola Alert", command=self.create_rule_from_selected)
+        menu.add_command(label="➕ Add to Dashboard", command=self.add_to_dashboard)
+        menu.add_command(label="🔔 Create Alert Rule", command=self.create_rule_from_selected)
         menu.add_separator()
-        menu.add_command(label="📋 Copia OID", command=self.copy_oid)
+        menu.add_command(label="📋 Copy OID", command=self.copy_oid)
 
         try:
             menu.tk_popup(event.x_root, event.y_root)
@@ -4584,8 +4601,8 @@ Click Destro - Menu contestuale
                 count += 1
 
         self.save_saved_values()
-        self.logger.info(f"Aggiunti {count} elementi al dashboard")
-        messagebox.showinfo("Dashboard", f"Aggiunti {count} elementi al dashboard")
+        self.logger.info(f"Added {count} items to the dashboard")
+        messagebox.showinfo("Dashboard", f"Added {count} items to the dashboard")
 
     def copy_oid(self):
         """Copia OID negli appunti"""
@@ -4596,13 +4613,13 @@ Click Destro - Menu contestuale
             if values:
                 self.root.clipboard_clear()
                 self.root.clipboard_append(values[0])
-                self.status_var.set(f"📋 OID copiato: {values[0]}")
+                self.status_var.set(f"📋 OID copied: {values[0]}")
 
     def remove_from_dashboard(self):
         """Rimuove da dashboard"""
         selection = self.dashboard_tree.selection()
         if not selection:
-            messagebox.showwarning("Avviso", "Seleziona elementi da rimuovere")
+            messagebox.showwarning("Notice", "Select items to remove")
             return
 
         for item in selection:
@@ -4620,7 +4637,7 @@ Click Destro - Menu contestuale
 
     def clear_dashboard(self):
         """Pulisce dashboard"""
-        if self.saved_values and messagebox.askyesno("Conferma", "Rimuovere tutti gli elementi?"):
+        if self.saved_values and messagebox.askyesno("Confirm", "Remove all items?"):
             self.saved_values.clear()
             self.historical_data.clear()  # NUOVO: Pulisci anche dati storici
             for item in self.dashboard_tree.get_children():
@@ -4630,7 +4647,7 @@ Click Destro - Menu contestuale
     def build_mib_tree(self):
         """CORRETTO: Costruisce albero MIB gerarchico visualizzando tutti i dati"""
         if not self.scan_results:
-            messagebox.showwarning("Avviso", "Effettua prima una scansione")
+            messagebox.showwarning("Notice", "Run a scan first")
             return
 
         # Pulisci albero esistente
@@ -4658,8 +4675,8 @@ Click Destro - Menu contestuale
         # Popola il treeview
         self._populate_mib_tree_view("", tree_structure, "")
 
-        self.status_var.set(f"🌳 Albero MIB costruito con {len(self.scan_results)} OID")
-        self.logger.info(f"Albero MIB costruito con {len(self.scan_results)} OID")
+        self.status_var.set(f"🌳 MIB Tree built with {len(self.scan_results)} OIDs")
+        self.logger.info(f"MIB tree built with {len(self.scan_results)} OIDs")
 
     def _populate_mib_tree_view(self, parent_item, tree_dict, parent_oid):
         """CORRETTO: Popola ricorsivamente il treeview con tutti i dati"""
@@ -4739,7 +4756,7 @@ Click Destro - Menu contestuale
 
     def clear_cache(self):
         """Pulisce cache e risultati"""
-        if messagebox.askyesno("🧹 Pulisci Cache", "Pulire tutti i risultati e la cache?"):
+        if messagebox.askyesno("🧹 Clear Cache", "Clear all results and the cache?"):
             for item in self.results_tree.get_children():
                 self.results_tree.delete(item)
             for item in self.mib_tree.get_children():
@@ -4750,14 +4767,14 @@ Click Destro - Menu contestuale
 
             gc.collect()
 
-            self.status_var.set("🧹 Cache pulita")
+            self.status_var.set("🧹 Cache cleared")
             self.info_var.set("")
-            self.logger.info("Cache pulita")
+            self.logger.info("Cache cleared")
 
     def load_config_dialog(self):
         """Dialog carica configurazione"""
         filename = filedialog.askopenfilename(
-            title="📁 Carica Configurazione",
+            title="📁 Load Configuration",
             filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
         )
 
@@ -4774,12 +4791,12 @@ Click Destro - Menu contestuale
                 self.timeout_var.set(config.get('timeout', '5.0'))
                 self.retries_var.set(config.get('retries', '3'))
 
-                messagebox.showinfo("✅ Configurazione", "Configurazione caricata con successo!")
-                self.logger.info(f"Configurazione caricata da: {filename}")
+                messagebox.showinfo("✅ Configurazione", "Configuration loaded successfully!")
+                self.logger.info(f"Configuration loaded from: {filename}")
 
             except Exception as e:
-                messagebox.showerror("❌ Errore", f"Errore caricamento:\n{str(e)}")
-                self.logger.error(f"Errore caricamento config: {str(e)}")
+                messagebox.showerror("❌ Error", f"Loading error:\n{str(e)}")
+                self.logger.error(f"Error loading config: {str(e)}")
 
     def save_saved_values(self):
         """Salva valori dashboard"""
@@ -4787,7 +4804,7 @@ Click Destro - Menu contestuale
             with open(self.saved_values_file, 'w') as f:
                 json.dump(self.saved_values, f, indent=2)
         except Exception as e:
-            self.logger.error(f"Errore salvataggio dashboard: {e}")
+            self.logger.error(f"Error saving dashboard: {e}")
 
     def load_saved_values(self):
         """Carica valori dashboard"""
@@ -4795,9 +4812,9 @@ Click Destro - Menu contestuale
             if os.path.exists(self.saved_values_file):
                 with open(self.saved_values_file, 'r') as f:
                     self.saved_values = json.load(f)
-                self.logger.info(f"Dashboard caricato: {len(self.saved_values)} elementi")
+                self.logger.info(f"Dashboard loaded: {len(self.saved_values)} items")
         except Exception as e:
-            self.logger.error(f"Errore caricamento dashboard: {e}")
+            self.logger.error(f"Error loading dashboard: {e}")
 
     def show_snmpv3_wizard(self):
         """Wizard configurazione SNMPv3"""
@@ -4807,28 +4824,28 @@ Click Destro - Menu contestuale
         wizard.transient(self.root)
 
         text = """
-🔐 CONFIGURAZIONE SNMPv3
+🔐 SNMPv3 CONFIGURATION
 
-1. USERNAME: Identifica l'utente SNMPv3
+1. USERNAME: Identifies the SNMPv3 user
 
-2. AUTENTICAZIONE:
-   • noAuth: Nessuna autenticazione
-   • MD5/SHA: Richiede password (min 8 caratteri)
+2. AUTHENTICATION:
+   • noAuth: No authentication
+   • MD5/SHA: Requires password (min 8 characters)
 
-3. PRIVACY (Crittografia):
-   • noPriv: Nessuna crittografia
-   • DES/AES: Richiede password privacy
+3. PRIVACY (Encryption):
+   • noPriv: No encryption
+   • DES/AES: Requires privacy password
 
-4. LIVELLI SICUREZZA:
-   • noAuthNoPriv: Solo username
-   • authNoPriv: Username + autenticazione
-   • authPriv: Username + auth + crittografia
+4. SECURITY LEVELS:
+   • noAuthNoPriv: Username only
+   • authNoPriv: Username + authentication
+   • authPriv: Username + auth + encryption
 
-5. ENGINE ID: Identifica univocamente il dispositivo
-   (usa "Scopri Engine ID" per ottenerlo)
+5. ENGINE ID: Uniquely identifies the device
+   (use "Discover Engine ID" to obtain it)
 
-⚠️ Le password devono corrispondere a quelle
-   configurate sul dispositivo SNMP!
+⚠️ Passwords must match those
+   configured on the SNMP device!
 """
 
         text_widget = tk.Text(wizard, wrap=tk.WORD)
@@ -4841,62 +4858,62 @@ Click Destro - Menu contestuale
     def show_help(self):
         """Mostra guida completa"""
         help_text = """
-📚 GUIDA SNMP BROWSER v3.5
+📚 SNMP BROWSER GUIDE v3.5
 
-🚀 OPERAZIONI BASE:
-• Configura host e parametri
-• Scegli versione SNMP (1, 2c, 3)
-• Clicca "Avvia Scansione"
-• Visualizza risultati nel browser
+🚀 BASIC OPERATIONS:
+• Configure host and parameters
+• Choose SNMP version (1, 2c, 3)
+• Click "Start Scan"
+• View results in the browser
 
 🔒 SNMPV3:
-• Richiede username e password
-• Supporta autenticazione e crittografia
-• Usa "Scopri Engine ID" per discovery
+• Requires username and password
+• Supports authentication and encryption
+• Use "Discover Engine ID" for discovery
 
-🔔 SISTEMA ALERT (NUOVO!):
-• Crea regole per monitorare valori
-• Notifiche desktop quando soglie superate
-• Invio email automatico per alert critici
-• Indicatore visivo verde/rosso dello stato
+🔔 ALERT SYSTEM (NEW!):
+• Create rules to monitor values
+• Desktop notifications when thresholds are exceeded
+• Automatic email for critical alerts
+• Green/red visual status indicator
 
-📊 DASHBOARD AVANZATO (NUOVO!):
-• Auto-refresh attivo di default (30s)
-• Grafici real-time dei valori
-• Statistiche e trend
-• Indicatori alert per ogni elemento
+📊 ADVANCED DASHBOARD (NEW!):
+• Auto-refresh active by default (30s)
+• Real-time graphs of values
+• Statistics and trends
+• Alert indicators for each item
 
-📈 GRAFICI (NUOVO!):
-• Visualizza andamento nel tempo
-• Salva grafici come immagini
-• Mini-grafici nel dashboard
+📈 GRAPHS (NEW!):
+• View trends over time
+• Save graphs as images
+• Mini-graphs in the dashboard
 
-📧 EMAIL ALERT (NUOVO!):
-• Configura server SMTP
-• Invio automatico per regole critiche
-• Test integrato configurazione
+📧 EMAIL ALERTS (NEW!):
+• Configure SMTP server
+• Automatic sending for critical rules
+• Built-in configuration test
 
-🛡️ SICUREZZA:
-• Password criptate
-• Logging completo
-• Limiti memoria e risultati
-• Cancellazione sicura credenziali
+🛡️ SECURITY:
+• Encrypted passwords
+• Full logging
+• Memory and result limits
+• Secure credential wipe
 
-FUNZIONI AVANZATE:
-• GET: Doppio click su OID
-• SET: Click destro > SET
-• WALK: Click destro > WALK
-• Export: Multipli formati
+ADVANCED FUNCTIONS:
+• GET: Double click on OID
+• SET: Right click > SET
+• WALK: Right click > WALK
+• Export: Multiple formats
 
 SHORTCUTS:
-• F5: Aggiorna dashboard
-• Ctrl+T: Test connessione
-• Ctrl+S: Salva configurazione
-• ESC: Interrompi scansione
+• F5: Refresh dashboard
+• Ctrl+T: Test connection
+• Ctrl+S: Save configuration
+• ESC: Stop scan
 """
 
         help_window = tk.Toplevel(self.root)
-        help_window.title("📚 Guida")
+        help_window.title("📚 Guide")
         help_window.geometry("600x500")
         help_window.transient(self.root)
 
@@ -4911,23 +4928,23 @@ SHORTCUTS:
         """Mostra info applicazione"""
         about_text = f"""
 SNMP Browser v3.5 - Production Ready
-con Advanced Monitoring
+with Advanced Monitoring
 
-Browser SNMP professionale con:
-• Supporto completo v1/v2c/v3
-• Sistema alert e regole personalizzabili
-• Grafici real-time e statistiche
-• Notifiche email per alert
+Professional SNMP browser with:
+• Full v1/v2c/v3 support
+• Customizable alert system and rules
+• Real-time graphs and statistics
+• Email notifications for alerts
 • Auto-refresh dashboard (30s default)
-• Indicatori visivi stato sistema
-• Crittografia credenziali
-• Logging su file con rotazione
-• Gestione memoria ottimizzata
-• Export multi-formato
+• Visual system status indicators
+• Credential encryption
+• Rotating file logging
+• Optimized memory management
+• Multi-format export
 
-Memoria attuale: {psutil.Process().memory_info().rss / 1024 / 1024:.1f}MB
-Risultati caricati: {len(self.scan_results)}
-Regole alert: {len(self.alert_rules)}
+Current memory: {psutil.Process().memory_info().rss / 1024 / 1024:.1f}MB
+Results loaded: {len(self.scan_results)}
+Alert rules: {len(self.alert_rules)}
 
 © 2024 - Software Production Ready
 """
@@ -4970,8 +4987,6 @@ def main():
         print("📊 Dashboard con auto-refresh attivo di default")
         print("🔔 Sistema di alert e regole pronto")
         print("📈 Grafici real-time disponibili")
-        # Crea directory necessarie
-        os.makedirs("logs", exist_ok=True)
 
         # Crea finestra principale
         root = tk.Tk()
@@ -5038,8 +5053,8 @@ def main():
         traceback.print_exc()
 
         try:
-            messagebox.showerror("Errore Critico",
-                                 f"Impossibile avviare l'applicazione:\n\n{str(e)}")
+            messagebox.showerror("Critical Error",
+                                 f"Unable to start the application:\n\n{str(e)}")
         except:
             pass
 
