@@ -492,6 +492,13 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 - **Icons**: Material Design Icons
 - **Executable Packaging**: [PyInstaller](https://pyinstaller.readthedocs.io/)
 
+## 🛠️ Contributors
+
+- [Paul Jorgensen](https://github.com/PJorgens61) — fork maintainer
+- [Claude](https://claude.com/claude-code) (Sonnet 5, Anthropic) — macOS crash fixes, English
+  translation, and packaging for this fork, working alongside Paul in
+  [Claude Code](https://claude.com/claude-code)
+
 ## 📞 Support
 
 - **Bug Reports**: Open an issue with debug logs attached (Menu → Help → "📊 Log Viewer")
