@@ -110,10 +110,21 @@ Advanced SNMP browser with modern GUI for network device discovery, monitoring, 
 
 ## 📥 Download
 
-**macOS**: download `SNMP-Browser-Professional-macOS.zip` from the
-[latest release](https://github.com/PJorgens61/snmp-browser/releases/latest), unzip it, and drag
-`SNMP Browser Professional.app` to your `/Applications` folder (or `~/Applications` if you don't
-have admin rights).
+**macOS**: there are two separate releases, one per chip architecture — **grab the wrong one and
+the app won't launch at all.**
+
+- **Apple Silicon (M1/M2/M3/M4)** — [v4.0.0-macos-en](https://github.com/PJorgens61/snmp-browser/releases/tag/v4.0.0-macos-en),
+  download `SNMP-Browser-Professional-macOS-arm64.zip`
+- **Intel** — [v4.0.0-macos-en-x86_64](https://github.com/PJorgens61/snmp-browser/releases/tag/v4.0.0-macos-en-x86_64),
+  download `SNMP-Browser-Professional-macOS-x86_64.zip`
+
+**Not sure which chip you have?** Click the Apple menu → **About This Mac**. It'll say either
+"Chip: Apple M1/M2/M3/M4..." (get the Apple Silicon release) or "Processor: Intel..." (get the
+Intel release). Or open Terminal and run `uname -m` — `arm64` means Apple Silicon, `x86_64` means
+Intel.
+
+Once you've got the right zip, unzip it and drag `SNMP Browser Professional.app` to your
+`/Applications` folder (or `~/Applications` if you don't have admin rights).
 
 The app is unsigned, so on first launch macOS will refuse to open it ("Apple could not verify
 'SNMP Browser Professional.app' is free of malware..."), with only **Done** / **Move to Trash**
