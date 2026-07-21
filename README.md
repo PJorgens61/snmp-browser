@@ -115,8 +115,21 @@ Advanced SNMP browser with modern GUI for network device discovery, monitoring, 
 `SNMP Browser Professional.app` to your `/Applications` folder (or `~/Applications` if you don't
 have admin rights).
 
-The app is unsigned, so on first launch **right-click it → Open → Open** to get past Gatekeeper's
-"unidentified developer" warning — a plain double-click will just show an error the first time.
+The app is unsigned, so on first launch macOS will refuse to open it ("Apple could not verify
+'SNMP Browser Professional.app' is free of malware..."), with only **Done** / **Move to Trash**
+as options — right-clicking → Open does **not** bypass this on current macOS (Sonoma/Sequoia).
+Pick one:
+
+- **Terminal (fastest)**: after moving the app to Applications, run
+  ```bash
+  xattr -cr "/Applications/SNMP Browser Professional.app"
+  ```
+  (use `~/Applications/...` instead if that's where you put it), then open the app normally.
+- **System Settings**: try to open the app once (you'll get the blocked dialog above — click
+  Done), then go to **System Settings → Privacy & Security**, scroll to the Security section,
+  and click **Open Anyway** next to the mention of this app. Confirm with your password/Touch ID,
+  then try opening the app again and click **Open** on the final confirmation.
+
 This only needs doing once.
 
 Prefer to build it yourself instead? See [Building Executables](#️-building-executables) below.
@@ -198,9 +211,10 @@ pyinstaller --windowed --icon=icon.icns \
     --name="SNMP Browser Professional" snmpflow.py
 ```
 
-The built app will be at `dist/SNMP Browser Professional.app`. It's unsigned, so on first launch
-Gatekeeper will block it — right-click the app → Open to approve it, or allow it under
-System Settings → Privacy & Security.
+The built app will be at `dist/SNMP Browser Professional.app`. Since you built it locally, macOS
+won't have quarantined it, so it should just open — Gatekeeper's blocking dialog (see
+[Download](#-download) above for how to get past it) mainly comes up for the **downloaded**
+release zip, whose contents get quarantined by the browser.
 
 ### Windows / Linux (upstream, untested by this fork)
 
