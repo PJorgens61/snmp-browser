@@ -277,7 +277,7 @@ class GraphWindow:
 
         if not self.data_points:
             ax = self.figure.add_subplot(111)
-            ax.text(0.5, 0.5, 'Nessun dato disponibile', ha='center', va='center')
+            ax.text(0.5, 0.5, 'No data available', ha='center', va='center')
             self.canvas.draw()
             return
 
@@ -1060,7 +1060,7 @@ class SnmpBrowserGUI:
 
         # Progress dialog
         progress_window = tk.Toplevel(self.root)
-        progress_window.title("📥 Importazione MIB")
+        progress_window.title("📥 Importing MIB")
         progress_window.geometry("400x200")
         progress_window.transient(self.root)
         progress_window.grab_set()
@@ -1109,7 +1109,7 @@ class SnmpBrowserGUI:
                     self.logger.info(f"MIB imported: {len(new_oids)} OIDs from {filename}")
                 else:
                     details_text.insert(tk.END,
-                                        f"⚠️ {os.path.basename(filename)}: Nessun OID trovato\n")
+                                        f"⚠️ {os.path.basename(filename)}: No OID found\n")
 
             except Exception as e:
                 error_msg = f"Errore in {os.path.basename(filename)}: {str(e)}"
@@ -1264,7 +1264,7 @@ class SnmpBrowserGUI:
                         details_text.insert(tk.END, f"File: {mib_name}\n")
                         details_text.insert(tk.END, f"Path: {data.get('filename', 'N/A')}\n")
                         details_text.insert(tk.END, f"Module: {data.get('module', 'N/A')}\n")
-                        details_text.insert(tk.END, f"OID importati: {len(data['oids'])}\n\n")
+                        details_text.insert(tk.END, f"OIDs imported: {len(data['oids'])}\n\n")
 
                         # Mostra primi 10 OID
                         details_text.insert(tk.END, "Example OID:\n")
@@ -2366,7 +2366,7 @@ class SnmpBrowserGUI:
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=15)
 
         # Info compatte
-        info_text = f"📋 OID: {oid}\n📌 {name}\n💡 Valore attuale: {current_value}"
+        info_text = f"📋 OID: {oid}\n📌 {name}\n💡 Current value: {current_value}"
         if host:
             info_text += f"\n🖥️ Host: {host}"
 
@@ -3077,7 +3077,7 @@ class SnmpBrowserGUI:
                         f"⚠️ Dashboard: {success}/{total} OK, {len(errors)} errori"))
                 else:
                     self.root.after(0, lambda: self.status_var.set(
-                        f"✅ Dashboard aggiornato: {total} elementi - {datetime.now().strftime('%H:%M:%S')}"))
+                        f"✅ Dashboard updated: {total} items - {datetime.now().strftime('%H:%M:%S')}"))
 
             except Exception as e:
                 self.logger.error(f"Error updating dashboard: {str(e)}")
@@ -3355,9 +3355,9 @@ class SnmpBrowserGUI:
     def _show_test_success(self, sys_desc, version_info):
         """Mostra successo test"""
         messagebox.showinfo("✅ Test OK",
-                            f"Connessione SNMP stabilita!\n\n"
-                            f"📡 Protocollo: {version_info}\n"
-                            f"🏢 Sistema: {sys_desc[:100]}...")
+                            f"SNMP connection established!\n\n"
+                            f"📡 Protocol: {version_info}\n"
+                            f"🏢 System: {sys_desc[:100]}...")
         self.status_var.set("✅ Test successful")
 
     def _show_test_warning(self):
@@ -4006,7 +4006,7 @@ class SnmpBrowserGUI:
                         self.root.after(0, lambda c=count: self.status_var.set(f"🌊 Walk: {c} OIDs found..."))
 
                 self.logger.info(f"Walk completed: {count} OIDs")
-                self.root.after(0, lambda c=count: self.status_var.set(f"✅ Walk completato: {count} OID"))
+                self.root.after(0, lambda c=count: self.status_var.set(f"✅ Walk completed: {count} OIDs"))
 
             except Exception as e:
                 self.logger.error(f"Full walk error: {str(e)}")
@@ -4314,7 +4314,7 @@ class SnmpBrowserGUI:
     def show_settings(self):
         """Mostra dialog impostazioni avanzate"""
         settings_window = tk.Toplevel(self.root)
-        settings_window.title("⚙️ Impostazioni")
+        settings_window.title("⚙️ Settings")
         settings_window.geometry("400x500")
         settings_window.transient(self.root)
         settings_window.grab_set()
@@ -4811,7 +4811,7 @@ Right Click - Context menu
                 self.timeout_var.set(config.get('timeout', '5.0'))
                 self.retries_var.set(config.get('retries', '3'))
 
-                messagebox.showinfo("✅ Configurazione", "Configuration loaded successfully!")
+                messagebox.showinfo("✅ Configuration", "Configuration loaded successfully!")
                 self.logger.info(f"Configuration loaded from: {filename}")
 
             except Exception as e:
@@ -5003,10 +5003,10 @@ def main():
         if not check_dependencies():
             sys.exit(1)
 
-        print("🚀 Avvio SNMP Browser v3.5 Production Ready + Advanced Monitoring...")
-        print("📊 Dashboard con auto-refresh attivo di default")
-        print("🔔 Sistema di alert e regole pronto")
-        print("📈 Grafici real-time disponibili")
+        print("🚀 Starting SNMP Browser v3.5 Production Ready + Advanced Monitoring...")
+        print("📊 Dashboard with auto-refresh active by default")
+        print("🔔 Alert and rule system ready")
+        print("📈 Real-time graphs available")
 
         # Crea finestra principale
         root = tk.Tk()
@@ -5025,7 +5025,7 @@ def main():
             elif os.path.exists('icon.ico'):
                 root.iconbitmap('icon.ico')
         except Exception as e:
-            print(f"⚠️ Impossibile caricare icona: {e}")
+            print(f"⚠️ Unable to load icon: {e}")
 
         # Stile
         style = ttk.Style()
@@ -5056,15 +5056,15 @@ def main():
         y = (root.winfo_screenheight() // 2) - (height // 2)
         root.geometry(f'{width}x{height}+{x}+{y}')
 
-        print("✅ Inizializzazione completata")
-        print("📊 Log salvati in: logs/")
-        print("🔐 Supporto SNMPv3 completo")
-        print("💾 Gestione memoria attiva")
-        print("🔒 Crittografia credenziali attiva")
-        print("🔄 Auto-refresh dashboard: 30s")
-        print("📧 Sistema email alert disponibile")
+        print("✅ Initialization completed")
+        print("📊 Logs saved in: logs/")
+        print("🔐 Full SNMPv3 support")
+        print("💾 Memory management active")
+        print("🔒 Credential encryption active")
+        print("🔄 Dashboard auto-refresh: 30s")
+        print("📧 Email alert system available")
         print(f"📁 Dati salvati in: {app.app_data_dir}")
-        print("📊 Log salvati in:", app.log_dir)
+        print("📊 Logs saved in:", app.log_dir)
         # Avvia GUI
         root.mainloop()
 
