@@ -3,4 +3,4 @@ psutil>=5.9.0
 Pillow>=10.0.0
 matplotlib>=3.5.0
 pyasn1>=0.4.8
-git+https://github.com/snmpware/snmpy.git
+git+https://github.com/PJorgens61/snmpy.git@translate-log-messages

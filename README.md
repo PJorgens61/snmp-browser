@@ -10,9 +10,19 @@
 Advanced SNMP browser with modern GUI for network device discovery, monitoring, alerting, and performance analysis.
 
 ![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.7%2B-blue.svg)
 ![Version](https://img.shields.io/badge/version-3.5-green.svg)
+
+> **This fork is macOS-only, English-only.**
+> It's a fork of [snmpware/snmp-browser](https://github.com/snmpware/snmp-browser) that fixes two
+> crashes on macOS (a relative-path bug that fails when the app is launched as a double-clicked
+> `.app`, and a Tcl/Tk 9 incompatibility) and translates the entire interface to English, since the
+> upstream `4.0.0` release ships an Italian-only Windows `.exe` with no macOS build. The
+> "Multi-Language Support" section below describes the upstream project's language files, which
+> are **not wired up to the UI in this fork** — everything here is English, and there is no
+> in-app language switcher. Windows/Linux build steps are left in this README for reference but
+> are untested by this fork; only the macOS path has been verified.
 
 ## 🚀 Features
 
@@ -100,11 +110,11 @@ Advanced SNMP browser with modern GUI for network device discovery, monitoring, 
 
 ## 📥 Download
 
-Download the latest pre-built executable from the [Releases](https://github.com/JustVugg/Snmp-Browser/releases) page.
+This fork does not publish pre-built releases. Build the macOS `.app` yourself from source —
+see [Building Executables](#️-building-executables) below.
 
-**Windows**: `SNMP_Browser_Professional_v3.5.exe` - Just download and run!  
-**Linux**: `SNMP_Browser_Professional_v3.5` - Make executable with `chmod +x`  
-**macOS**: `SNMP_Browser_Professional_v3.5.app` - Double-click to run
+For Windows or Linux, or for other languages, use the upstream
+[snmpware/snmp-browser releases](https://github.com/snmpware/snmp-browser/releases) instead.
 
 ## 🛠️ Installation from Source
 
@@ -113,16 +123,20 @@ Download the latest pre-built executable from the [Releases](https://github.com/
 > **Required Library: [snmpy](https://github.com/snmpware/snmpy)**
 >
 > This SNMP library is **required to run SNMP Browser Professional**.
-> It is not available on PyPI and must be installed directly from GitHub:
+> It is not available on PyPI and must be installed directly from GitHub.
+>
+> This fork uses a [patched branch](https://github.com/PJorgens61/snmpy/tree/translate-log-messages)
+> that translates the library's log messages to English to match the rest of this fork. The
+> upstream `snmpware/snmpy` also works fine — it just logs some messages in Italian.
 
 **Option 1: Using pip**
 ```bash
-pip install git+https://github.com/snmpware/snmpy.git
+pip install git+https://github.com/PJorgens61/snmpy.git@translate-log-messages
 ```
 
 **Option 2: Manual installation**
 ```bash
-git clone https://github.com/snmpware/snmpy.git
+git clone -b translate-log-messages https://github.com/PJorgens61/snmpy.git
 cd snmpy
 python3 setup.py install
 ```
@@ -141,35 +155,29 @@ pip install -r requirements.txt
 
 ### Running from Source
 ```bash
-git clone https://github.com/yourusername/snmp-browser-professional.git
-cd snmp-browser-professional
+git clone https://github.com/PJorgens61/snmp-browser.git
+cd snmp-browser
 pip install -r requirements.txt
-python snmp_browser_professional.py
+python3 snmpflow.py
 ```
 
 ## 🏗️ Building Executables
 
-### Windows
+### macOS (this fork — verified)
+
+Homebrew's `python@3.14` doesn't ship Tk support by default, so install that first:
 ```bash
-pyinstaller --onefile --windowed --icon=icon.ico ^
-    --add-data="icon.png;." ^
-    --add-data="icon.ico;." ^
-    --hidden-import=cryptography ^
-    --hidden-import=psutil ^
-    --hidden-import=snmpy ^
-    --hidden-import=PIL ^
-    --hidden-import=matplotlib ^
-    --collect-all=snmpy ^
-    --collect-all=cryptography ^
-    --collect-all=psutil ^
-    --collect-all=matplotlib ^
-    --name=SNMP_Browser_Professional_v3.5 snmp_browser_professional.py
+brew install python-tk@3.14
 ```
 
-### Linux/Ubuntu
+Then build the `.app` bundle. `icon.icns` isn't included in the repo — generate one from
+`icon.png` with `sips`/`iconutil`, or drop `--icon=icon.icns` to build without a custom icon:
 ```bash
-pyinstaller --onefile --windowed --icon=icon.png \
+pip install -r requirements.txt pyinstaller
+
+pyinstaller --windowed --icon=icon.icns \
     --add-data="icon.png:." \
+    --add-data="languages.json:." \
     --hidden-import=cryptography \
     --hidden-import=psutil \
     --hidden-import=snmpy \
@@ -179,32 +187,25 @@ pyinstaller --onefile --windowed --icon=icon.png \
     --collect-all=cryptography \
     --collect-all=psutil \
     --collect-all=matplotlib \
-    --name=SNMP_Browser_Professional_v3.5 snmp_browser_professional.py
+    --name="SNMP Browser Professional" snmpflow.py
 ```
 
-### macOS
-```bash
-pyinstaller --onefile --windowed --icon=icon.icns \
-    --add-data="icon.png:." \
-    --hidden-import=cryptography \
-    --hidden-import=psutil \
-    --hidden-import=snmpy \
-    --hidden-import=PIL \
-    --hidden-import=matplotlib \
-    --collect-all=snmpy \
-    --collect-all=cryptography \
-    --collect-all=psutil \
-    --collect-all=matplotlib \
-    --name=SNMP_Browser_Professional_v3.5 snmp_browser_professional.py
-```
+The built app will be at `dist/SNMP Browser Professional.app`. It's unsigned, so on first launch
+Gatekeeper will block it — right-click the app → Open to approve it, or allow it under
+System Settings → Privacy & Security.
+
+### Windows / Linux (upstream, untested by this fork)
+
+These platforms aren't the focus of this fork; use the
+[upstream repo](https://github.com/snmpware/snmp-browser) instead, which documents both.
 
 ## 💻 System Requirements
 
-- **Operating System**: Windows 10/11, Ubuntu 20.04+, or macOS 10.14+
-- **Python**: 3.7 or higher (for source installation)
+- **Operating System**: macOS 10.14+
+- **Python**: 3.7 or higher, with Tk support (for source installation)
 - **Memory**: 512 MB RAM minimum (1 GB recommended)
 - **Network**: Access to SNMP-enabled devices
-- **Permissions**: Admin/root for trap receiver on port 162
+- **Permissions**: root (via `sudo`) for the trap receiver on port 162
 
 ## 🚦 Quick Start Guide
 
@@ -213,19 +214,24 @@ pyinstaller --onefile --windowed --icon=icon.icns \
 2. Enter target device IP address
 3. Select SNMP version (1, 2c, or 3)
 4. Configure credentials (community string or SNMPv3 user)
-5. Click "Avvia Scansione" to discover OIDs
+5. Click "Start Scan" to discover OIDs
 6. Browse results in the main tab
+
+> **Note:** this fork's codebase only has three tabs — **SNMP Browser**, **Dashboard**, and
+> **MIB Tree**. The upstream sections below on Trap Manager, Batch Operations, and Performance
+> Monitoring describe features that aren't present in this source snapshot; they're kept here
+> only because removing them wasn't in scope for the macOS/English fixes this fork makes.
 
 ### Setting Up Monitoring & Alerts
 1. **Create Alert Rules**:
-   - In results browser, right-click an OID → "🔔 Crea Regola"
-   - Or go to Menu → Monitoring → "Gestisci Regole Alert"
+   - In results browser, right-click an OID → "🔔 Create Rule"
+   - Or go to Menu → Monitoring → "Manage Alert Rules"
    - Set condition (>, <, =, ≠, contains) and threshold value
    - Choose action: Desktop notification, Email, or Both
    - Rule monitors automatically in background (every 10 seconds)
 
 2. **Configure Email Alerts**:
-   - Menu → Monitoring → "📧 Configura Email"
+   - Menu → Monitoring → "📧 Configure Email"
    - Enter SMTP server details (e.g., smtp.gmail.com:587)
    - Provide credentials (stored encrypted)
    - Test configuration with "📧 Test" button
@@ -233,12 +239,12 @@ pyinstaller --onefile --windowed --icon=icon.icns \
 3. **View Alert Status**:
    - Top alert status bar shows system state (🟢/🔴)
    - Dashboard "🔔" column indicates alerts per item
-   - Menu → Monitoring → "📊 Visualizza Alert History" for full log
+   - Menu → Monitoring → "📊 View Alert History" for full log
 
 ### Using Graphs & Historical Data
 1. **View Graphs**:
    - In dashboard, select an item
-   - Click "📊 Grafico" for full-screen graph
+   - Click "📊 Graph" for full-screen graph
    - Or view mini-graph in right panel automatically
 
 2. **Graph Features**:
@@ -249,19 +255,19 @@ pyinstaller --onefile --windowed --icon=icon.icns \
 
 3. **Data Management**:
    - Historical data saved automatically
-   - Menu → Tools → "💾 Salva Dati Storici" to force save
-   - "🧹 Pulisci Dati Vecchi" removes data >24h old
+   - Menu → Tools → "💾 Save Historical Data" to force save
+   - "🧹 Clean Old Data" removes data >24h old
 
 ### Importing Custom MIBs
-1. Menu → Tools → "📥 Importa MIB Custom"
+1. Menu → Tools → "📥 Import Custom MIB"
 2. Select one or more .mib, .txt, or .my files
 3. Parser extracts OID definitions automatically
 4. OID names update immediately in all views
-5. Manage imported MIBs via "📚 Gestisci MIB"
+5. Manage imported MIBs via "📚 Manage MIBs"
 
 ### Auto-Refresh Dashboard
 - **Enabled by default** with 30-second interval
-- Toggle with "🔄 Auto-Refresh" checkbox
+- Toggle with "🔄 Auto-Refresh (30s)" checkbox
 - Adjust interval (5-300 seconds) in spinbox
 - Dashboard updates automatically with:
   - Current values
@@ -269,49 +275,39 @@ pyinstaller --onefile --windowed --icon=icon.icns \
   - Trend indicators
   - Mini-graphs
 
-### Using Trap Manager
+### Using Trap Manager *(described upstream; not present in this codebase — see note above)*
 1. Go to "Trap Manager" tab
-2. **Receiver**: Click "Avvia Receiver" (requires admin for port 162)
+2. **Receiver**: Click "Start Receiver" (requires admin for port 162)
 3. **Sender**: Configure destination and select trap type
-4. Click "📤 Invia Trap" to send
+4. Click "📤 Send Trap" to send
 
-### Batch Operations
-1. Menu → Tools → "Operazioni Batch"
+### Batch Operations *(described upstream; not present in this codebase — see note above)*
+1. Menu → Tools → "Batch Operations"
 2. Enter multiple host IPs (one per line)
 3. Specify OID to query
-4. Click "Esegui" for parallel execution
+4. Click "Run" for parallel execution
 
-### Performance Monitoring
+### Performance Monitoring *(described upstream; not present in this codebase — see note above)*
 1. Go to "Performance" tab
 2. View real-time metrics after operations
 3. Export data for analysis
 
 ## 🌍 Multi-Language Support
 
-SNMP Browser Professional supports 13 languages out of the box:
+**Not implemented in this fork.** The repo ships a `languages.json` with translation tables for
+13 languages (listed below, inherited from upstream), but nothing in `snmpflow.py` actually reads
+it — there is no in-app language switcher, and the "Changing Language" steps upstream describes
+don't correspond to any real menu item. This fork hardcodes the entire interface to English by
+editing the UI strings directly in the source; switching to a different language would mean
+translating the source again, not toggling a setting.
 
-- 🇬🇧 English (en)
-- 🇪🇸 Spanish (es) - Español
-- 🇫🇷 French (fr) - Français
-- 🇩🇪 German (de) - Deutsch
-- 🇮🇹 Italian (it) - Italiano
-- 🇨🇳 Chinese (zh) - 中文
-- 🇯🇵 Japanese (ja) - 日本語
-- 🇵🇹 Portuguese (pt) - Português
-- 🇷🇺 Russian (ru) - Русский
-- 🇸🇪 Swedish (sv) - Svenska
-- 🇸🇦 Arabic (ar) - العربية
-- 🇮🇳 Hindi (hi) - हिन्दी
-- 🇭🇺 Hungarian (hu) - Magyar
+Upstream's shipped (but unused) translation tables cover:
+🇬🇧 English · 🇪🇸 Spanish · 🇫🇷 French · 🇩🇪 German · 🇮🇹 Italian · 🇨🇳 Chinese · 🇯🇵 Japanese ·
+🇵🇹 Portuguese · 🇷🇺 Russian · 🇸🇪 Swedish · 🇸🇦 Arabic · 🇮🇳 Hindi · 🇭🇺 Hungarian
 
-### Changing Language
-1. Go to **Help** → **Language**
-2. Select your preferred language
-3. Click **Apply**
-4. Restart the application
-
-### Adding New Languages
-Want to add your language? See the [LANGUAGE_GUIDE.md](LANGUAGE_GUIDE.md) for step-by-step instructions. Contributions are welcome!
+See [LANGUAGE_GUIDE.md](LANGUAGE_GUIDE.md) if you want to extend `languages.json`, though note
+that doing so alone won't change what the app displays unless the UI code is also wired up to
+read from it.
 
 ## 🔧 Configuration Files
 
@@ -333,7 +329,7 @@ Configuration files created:
 - `.SNMPBrowser_key` - Encryption key (keep secure!)
 - `logs/` - Directory containing rotating log files
 
-**View Data Location**: Menu → Tools → "📁 Posizione Dati"
+**View Data Location**: Menu → Tools → "📁 Data Location"
 
 ## 📊 Supported Operations
 
@@ -384,11 +380,11 @@ The integrated MIB parser supports:
 - **Multiple Formats**: .mib, .txt, .my file extensions
 
 ### Loading Custom MIBs
-1. Menu → Tools → "📥 Importa MIB Custom"
+1. Menu → Tools → "📥 Import Custom MIB"
 2. Select one or more MIB files
 3. Progress dialog shows parsing status
 4. OID names automatically update in all views
-5. Manage via "📚 Gestisci MIB" (view details, remove, export list)
+5. Manage via "📚 Manage MIBs" (view details, remove, export list)
 
 ## 🤝 Contributing
 
@@ -402,15 +398,12 @@ Contributions are welcome! Please follow these steps:
 
 ### Development Setup
 ```bash
-# Clone with submodules
-git clone --recursive https://github.com/yourusername/snmp-browser-professional.git
-
-# Install dev dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-python -m pytest tests/
+git clone https://github.com/PJorgens61/snmp-browser.git
+cd snmp-browser
+pip install -r requirements.txt
 ```
+> Note: this repo has no `requirements-dev.txt` or `tests/` directory, despite what earlier
+> versions of this README implied — there's no automated test suite to run.
 
 ## 📄 Requirements.txt
 ```
@@ -418,7 +411,7 @@ cryptography>=41.0.0
 psutil>=5.9.0
 Pillow>=10.0.0
 matplotlib>=3.5.0
-git+https://github.com/snmpware/snmpy.git
+git+https://github.com/PJorgens61/snmpy.git@translate-log-messages
 ```
 
 ### Development Requirements
@@ -440,17 +433,17 @@ pyinstaller>=5.0
 **"Module not found" errors**
 - Ensure all dependencies are installed: `pip install -r requirements.txt`
 - Install matplotlib: `pip install matplotlib --upgrade`
-- Verify snmpy: `pip install git+https://github.com/snmpware/snmpy.git`
+- Verify snmpy: `pip install git+https://github.com/PJorgens61/snmpy.git@translate-log-messages`
 
 **High memory usage**
-- Adjust limits in Settings → Limiti
-- Clear cache with Tools → Pulisci Cache
-- Clean old historical data: Tools → "🧹 Pulisci Dati Vecchi"
+- Adjust limits in Settings → Limits
+- Clear cache with Tools → Clear Cache
+- Clean old historical data: Tools → "🧹 Clean Old Data"
 
 **SNMPv3 discovery fails**
 - Check firewall settings
 - Verify SNMPv3 credentials
-- Try manual Engine ID discovery: "🎯 Scopri Engine ID"
+- Try manual Engine ID discovery: "🎯 Discover Engine ID"
 
 **Email alerts not working**
 - Verify SMTP configuration
@@ -471,13 +464,12 @@ pyinstaller>=5.0
 ## 📈 Performance Tips
 
 - Use SNMPv2c or v3 for bulk operations (10x faster than v1)
-- Enable "Scansione Estesa" only when needed
+- Enable "Extended Scan" only when needed
 - Set appropriate timeout values for your network (default 5s)
 - Use profiles for quick device switching
 - Limit walk operations to specific subtrees
 - Adjust auto-refresh interval based on network load
 - Clean old historical data regularly to save disk space
-- Use batch operations for multi-host queries
 
 ## 📝 License
 
