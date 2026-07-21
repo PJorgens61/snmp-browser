@@ -3234,7 +3234,7 @@ class SnmpBrowserGUI:
                 ipaddress.ip_address(host)
             except:
                 try:
-                    resolved = socket.gethostbyname(host)
+                    resolved = socket.getaddrinfo(host, None, socket.AF_INET)[0][4][0]
                     self.logger.info(f"Host resolved: {host} -> {resolved}")
                 except:
                     return False, f"Unable to resolve host: {host}"
